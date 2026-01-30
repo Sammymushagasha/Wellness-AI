@@ -1,14 +1,57 @@
 // ===== CONFIGURATION =====
 const CONFIG = {
-    // TODO: Add your Claude API key here when ready
-    CLAUDE_API_KEY: 'YOUR_API_KEY_HERE',
-    CLAUDE_API_URL: 'https://api.anthropic.com/v1/messages',
+    // Use local proxy instead of direct API call (fixes CORS)
+    CLAUDE_API_URL: 'http://localhost:3000/api/messages',
     CLAUDE_MODEL: 'claude-sonnet-4-20250514'
+    // Note: API key is now in proxy-server.js for security
+};
+
+// ===== MOOD CLASSIFICATION SYSTEM =====
+const MOOD_KEYWORDS = {
+    anxious: {
+        keywords: ['anxious', 'anxiety', 'worried', 'nervous', 'panic', 'stressed', 'overwhelmed', 'tense'],
+        slang: ['freaking out', 'losing it', 'cant breathe', 'tweaking', 'buggin', 'trippin'],
+        severity: 'high',
+        recommendedFeatures: ['breathing', 'mini-game', 'calming-video']
+    },
+    sad: {
+        keywords: ['sad', 'depressed', 'down', 'unhappy', 'lonely', 'empty', 'hopeless', 'crying'],
+        slang: ['feeling like crap', 'in my feels', 'big sad', 'down bad', 'not vibing'],
+        severity: 'medium',
+        recommendedFeatures: ['affirmations', 'uplifting-video', 'journal']
+    },
+    angry: {
+        keywords: ['angry', 'mad', 'furious', 'frustrated', 'irritated', 'annoyed', 'rage'],
+        slang: ['pissed', 'ticked off', 'heated', 'salty', 'pressed', 'tilted'],
+        severity: 'high',
+        recommendedFeatures: ['breathing', 'stretch', 'mini-game']
+    },
+    tired: {
+        keywords: ['tired', 'exhausted', 'drained', 'sleepy', 'fatigue', 'burned out', 'weary'],
+        slang: ['dead', 'zombified', 'running on fumes', 'cant even', 'wiped', 'gassed'],
+        severity: 'medium',
+        recommendedFeatures: ['stretch', 'calming-video', 'breathing']
+    },
+    restless: {
+        keywords: ['restless', 'cant sleep', 'insomnia', 'awake', 'tossing', 'cant relax'],
+        slang: ['cant sleep for shit', 'up all night', 'brain wont shut up', 'wired'],
+        severity: 'medium',
+        recommendedFeatures: ['breathing', 'calming-video', 'stretch']
+    },
+    positive: {
+        keywords: ['good', 'great', 'happy', 'excited', 'calm', 'peaceful', 'relaxed', 'better'],
+        slang: ['vibing', 'feeling it', 'im good', 'chillin', 'blessed', 'living'],
+        severity: 'low',
+        recommendedFeatures: ['affirmations', 'mini-game', 'journal']
+    }
 };
 
 // ===== STATE MANAGEMENT =====
 let conversationHistory = [];
 let currentPage = 'chat';
+let currentMood = null;
+let streamingMessage = null;
+let useTensorFlow = false;
 
 // ===== DOM ELEMENTS =====
 const navItems = document.querySelectorAll('.nav-item');
@@ -19,24 +62,110 @@ const emptyState = document.querySelector('.empty-state');
 const chatContainer = document.querySelector('.chat-container');
 const promptBubbles = document.querySelectorAll('.prompt-bubble');
 
+// ===== SLANG NORMALIZATION =====
+const SLANG_DICTIONARY = {
+    'cant': "can't", 'wont': "won't", 'dont': "don't", 'isnt': "isn't",
+    'im': "i'm", 'ive': "i've", 'id': "i'd", 'ill': "i'll",
+    'ur': 'your', 'u': 'you', 'r': 'are', 'y': 'why',
+    'rn': 'right now', 'idk': "i don't know", 'tbh': 'to be honest',
+    'ngl': 'not gonna lie', 'fr': 'for real', 'lowkey': 'kind of',
+    'highkey': 'really', 'af': 'very', 'omg': 'oh my god',
+    'wtf': 'what the heck', 'fml': 'having a hard time',
+    'smh': 'shaking my head', 'lol': 'laughing', 'lmao': 'laughing'
+};
+
+function normalizeSlang(text) {
+    let normalized = text.toLowerCase();
+    
+    Object.keys(SLANG_DICTIONARY).forEach(slang => {
+        const regex = new RegExp(`\\b${slang}\\b`, 'gi');
+        normalized = normalized.replace(regex, SLANG_DICTIONARY[slang]);
+    });
+    
+    return normalized;
+}
+
+// ===== MOOD CLASSIFICATION (HYBRID APPROACH) =====
+async function classifyMood(text) {
+    if (useTensorFlow && window.tensorFlowClassifier && window.tensorFlowClassifier.isReady) {
+        console.log('🧠 Using TensorFlow classification...');
+        
+        const tfResult = await window.tensorFlowClassifier.classify(text);
+        
+        if (tfResult && tfResult.confidence > 0.4) {
+            console.log(`✅ TensorFlow detected: ${tfResult.mood} (${(tfResult.confidence * 100).toFixed(1)}% confidence)`);
+            
+            return {
+                mood: tfResult.mood,
+                score: tfResult.confidence * 10,
+                severity: tfResult.confidence > 0.7 ? 'high' : 'medium',
+                features: tfResult.features,
+                method: 'tensorflow',
+                confidence: tfResult.confidence
+            };
+        } else {
+            console.log('⚠️ TensorFlow confidence too low, using keyword fallback');
+        }
+    }
+    
+    console.log('📝 Using keyword-based classification...');
+    return classifyMoodKeyword(text);
+}
+
+// ===== KEYWORD-BASED MOOD CLASSIFICATION =====
+function classifyMoodKeyword(text) {
+    const normalizedText = normalizeSlang(text);
+    let detectedMoods = [];
+    
+    Object.keys(MOOD_KEYWORDS).forEach(mood => {
+        const moodData = MOOD_KEYWORDS[mood];
+        let score = 0;
+        
+        moodData.keywords.forEach(keyword => {
+            if (normalizedText.includes(keyword)) {
+                score += 2;
+            }
+        });
+        
+        moodData.slang.forEach(slang => {
+            if (normalizedText.includes(slang)) {
+                score += 3;
+            }
+        });
+        
+        if (score > 0) {
+            detectedMoods.push({
+                mood: mood,
+                score: score,
+                severity: moodData.severity,
+                features: moodData.recommendedFeatures,
+                method: 'keyword'
+            });
+        }
+    });
+    
+    detectedMoods.sort((a, b) => b.score - a.score);
+    
+    if (detectedMoods.length > 0) {
+        console.log(`✅ Keyword detected: ${detectedMoods[0].mood}`);
+        return detectedMoods[0];
+    }
+    
+    console.log('⚪ No mood detected');
+    return null;
+}
+
 // ===== NAVIGATION =====
 navItems.forEach(item => {
     item.addEventListener('click', () => {
-        // Remove active class from all items
         navItems.forEach(nav => nav.classList.remove('active'));
-        
-        // Add active class to clicked item
         item.classList.add('active');
         
-        // Get the page data attribute
         const page = item.dataset.page;
         currentPage = page;
         
-        // Handle page switching (placeholder for now)
         console.log(`Switched to: ${page}`);
         
-        // TODO: Add page switching logic here when you build other pages
-        // For now, only chat is functional
         if (page !== 'chat') {
             alert(`${item.querySelector('.nav-title').textContent} - Coming soon!`);
         }
@@ -45,7 +174,6 @@ navItems.forEach(item => {
 
 // ===== INPUT HANDLING =====
 messageInput.addEventListener('input', () => {
-    // Enable send button only if there's text
     sendButton.disabled = messageInput.value.trim() === '';
 });
 
@@ -77,51 +205,52 @@ async function sendMessage() {
     
     if (!userMessage) return;
     
-    // Hide empty state and show chat container
     if (emptyState.style.display !== 'none') {
         emptyState.style.display = 'none';
         chatContainer.style.display = 'flex';
     }
     
-    // Clear input
     messageInput.value = '';
     sendButton.disabled = true;
     
-    // Add user message to chat
     addMessage(userMessage, 'user');
     
-    // Add to conversation history
+    const moodAnalysis = await classifyMood(userMessage);
+    if (moodAnalysis) {
+        currentMood = moodAnalysis;
+        console.log('Detected mood:', moodAnalysis);
+    }
+    
     conversationHistory.push({
         role: 'user',
         content: userMessage
     });
     
-    // Show typing indicator
     const typingIndicator = addTypingIndicator();
     
     try {
-        // Call Claude API
-        const aiResponse = await callClaudeAPI(userMessage);
-        
-        // Remove typing indicator
-        typingIndicator.remove();
-        
-        // Add AI response to chat
-        addMessage(aiResponse, 'ai');
-        
-        // Add to conversation history
-        conversationHistory.push({
-            role: 'assistant',
-            content: aiResponse
-        });
-        
+        await streamClaudeAPI(userMessage, typingIndicator);
     } catch (error) {
-        // Remove typing indicator
         typingIndicator.remove();
         
-        // Show error message
-        addMessage('Sorry, I encountered an error. Please try again.', 'ai');
-        console.error('Error calling Claude API:', error);
+        let errorMessage = 'Sorry, I encountered an error. ';
+        
+        if (error.message.includes('Failed to fetch') && error.message.includes('localhost:3000')) {
+            errorMessage = '⚠️ Proxy server not running!\n\n';
+            errorMessage += 'Please start the proxy server first:\n';
+            errorMessage += '1. Open terminal in your project folder\n';
+            errorMessage += '2. Run: node proxy-server.js\n';
+            errorMessage += '3. Then refresh this page and try again';
+        } else if (error.message.includes('401')) {
+            errorMessage += 'API authentication failed. Check your API key in proxy-server.js';
+        } else if (error.message.includes('429')) {
+            errorMessage += 'Too many requests. Wait 60 seconds and try again.';
+        } else {
+            errorMessage += error.message;
+        }
+        
+        addMessage(errorMessage, 'ai');
+        console.error('Error:', error);
     }
 }
 
@@ -132,12 +261,12 @@ function addMessage(text, type) {
     
     const bubbleDiv = document.createElement('div');
     bubbleDiv.className = 'message-bubble';
+    bubbleDiv.style.whiteSpace = 'pre-wrap';
     bubbleDiv.textContent = text;
     
     messageDiv.appendChild(bubbleDiv);
     messagesArea.appendChild(messageDiv);
     
-    // Scroll to bottom
     chatContainer.scrollTop = chatContainer.scrollHeight;
     
     return messageDiv;
@@ -149,7 +278,7 @@ function addTypingIndicator() {
     typingDiv.className = 'message ai typing-indicator';
     typingDiv.innerHTML = `
         <div class="message-bubble">
-            <span style="opacity: 0.6;">Thinking...</span>
+            <span style="opacity: 0.6;">✨ Thinking...</span>
         </div>
     `;
     messagesArea.appendChild(typingDiv);
@@ -157,89 +286,189 @@ function addTypingIndicator() {
     return typingDiv;
 }
 
-// ===== CLAUDE API CALL =====
-async function callClaudeAPI(userMessage) {
-    // Check if API key is set
-    if (!CONFIG.CLAUDE_API_KEY || CONFIG.CLAUDE_API_KEY === 'YOUR_API_KEY_HERE') {
-        // Return a placeholder response for testing
-        console.warn('⚠️ API Key not set. Using placeholder response.');
-        return await simulateAIResponse(userMessage);
+// ===== CREATE STREAMING MESSAGE =====
+function createStreamingMessage() {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message ai';
+    
+    const bubbleDiv = document.createElement('div');
+    bubbleDiv.className = 'message-bubble';
+    bubbleDiv.textContent = '';
+    
+    messageDiv.appendChild(bubbleDiv);
+    messagesArea.appendChild(messageDiv);
+    
+    return bubbleDiv;
+}
+
+// ===== FEATURE RECOMMENDATION SYSTEM =====
+function getFeatureRecommendation(mood) {
+    if (!mood || !mood.features) return '';
+    
+    const feature = mood.features[0];
+    
+    const recommendations = {
+        'breathing': "Would you like to try a calming breathing exercise? It can help reduce anxiety quickly.",
+        'mini-game': "How about a quick mini-game to help shift your focus?",
+        'calming-video': "I have some calming videos that might help you relax. Want to check them out?",
+        'stretch': "Some gentle stretches might help release that tension. Should I guide you through some?",
+        'affirmations': "Would you like some positive affirmations to lift your spirits?",
+        'uplifting-video': "I can show you some uplifting content. Would that help?",
+        'journal': "Would you like to write about how you're feeling in your journal?"
+    };
+    
+    return recommendations[feature] || '';
+}
+
+// ===== ENHANCED SYSTEM PROMPT =====
+function getSystemPrompt() {
+    let moodContext = '';
+    if (currentMood) {
+        const featureRec = getFeatureRecommendation(currentMood);
+        moodContext = `\n\nCURRENT USER MOOD: ${currentMood.mood} (severity: ${currentMood.severity})
+RECOMMENDED FEATURES: ${currentMood.features.join(', ')}
+SUGGESTED GUIDANCE: ${featureRec}
+
+When responding, subtly guide the user toward trying one of these features: ${currentMood.features.join(', ')}.
+Use natural, conversational language to suggest these options without being pushy.`;
     }
+    
+    return `You are a compassionate and empathetic mental wellness AI assistant specialized in therapeutic conversations.
+
+YOUR ROLE:
+- Listen actively and validate feelings with empathy
+- Provide supportive, non-judgmental responses
+- Recognize casual language, slang, and abbreviations naturally
+- Gently guide users toward helpful wellness features when appropriate
+- Keep responses concise (2-4 sentences) but warm and personal
+- Use a friendly, conversational tone like a supportive friend
+
+AVAILABLE WELLNESS FEATURES YOU CAN RECOMMEND:
+1. Breathing exercises - For anxiety, stress, panic
+2. Mini-games - For distraction, mood shifting, restlessness
+3. Calming videos - For relaxation, sleep preparation
+4. Stretch guides - For physical tension, fatigue
+5. Affirmations - For low mood, negative thoughts
+6. Uplifting videos - For sadness, loneliness
+7. Journal - For processing emotions, reflection
+
+GUIDELINES:
+- When suggesting features, frame them as gentle options, not commands
+- Use phrases like "Would you like to try...", "How about...", "I can show you..."
+- If user declines a suggestion, support their choice and offer alternatives
+- NEVER diagnose or treat mental health conditions
+- Encourage professional help for serious concerns
+- Match the user's communication style (casual, formal, etc.)
+${moodContext}
+
+Remember: You're a supportive companion helping users feel heard and guiding them to helpful resources.`;
+}
+
+// ===== STREAMING CLAUDE API (USING PROXY) =====
+async function streamClaudeAPI(userMessage, typingIndicator) {
+    console.log('📡 Calling proxy server...');
     
     try {
         const response = await fetch(CONFIG.CLAUDE_API_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': CONFIG.CLAUDE_API_KEY,
-                'anthropic-version': '2023-06-01'
+                'Content-Type': 'application/json'
+                // No API key needed - proxy handles it
             },
             body: JSON.stringify({
                 model: CONFIG.CLAUDE_MODEL,
                 max_tokens: 1000,
                 messages: conversationHistory,
-                system: `You are a compassionate and empathetic mental wellness AI assistant. 
-                        Your role is to:
-                        - Listen actively and validate feelings
-                        - Provide supportive, non-judgmental responses
-                        - Suggest helpful coping strategies when appropriate
-                        - Encourage professional help for serious concerns
-                        - Use warm, conversational language
-                        - Keep responses concise but thoughtful
-                        
-                        Remember: You're here to support, not to diagnose or treat mental health conditions.`
+                system: getSystemPrompt()
             })
         });
         
+        console.log('Response status:', response.status);
+        
         if (!response.ok) {
-            throw new Error(`API Error: ${response.status}`);
+            const errorText = await response.text();
+            throw new Error(`Proxy Error ${response.status}: ${errorText}`);
         }
         
         const data = await response.json();
-        return data.content[0].text;
+        const fullText = data.content[0].text;
+        
+        typingIndicator.remove();
+        
+        const messageBubble = createStreamingMessage();
+        
+        await typewriterEffect(messageBubble, fullText);
+        
+        conversationHistory.push({
+            role: 'assistant',
+            content: fullText
+        });
+        
+        chatContainer.scrollTop = chatContainer.scrollHeight;
         
     } catch (error) {
-        console.error('Claude API Error:', error);
+        console.error('API Error:', error);
         throw error;
     }
 }
 
-// ===== SIMULATE AI RESPONSE (for testing without API key) =====
-async function simulateAIResponse(userMessage) {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+// ===== TYPEWRITER EFFECT FOR STREAMING =====
+async function typewriterEffect(element, text, speed = 20) {
+    element.textContent = '';
     
-    // Simple response logic for testing
-    const lowerMessage = userMessage.toLowerCase();
-    
-    if (lowerMessage.includes('anxious') || lowerMessage.includes('anxiety')) {
-        return "I hear that you're feeling anxious. That's completely valid, and it's brave of you to share that. Would you like to try a quick breathing exercise, or would you prefer to talk more about what's on your mind?";
+    for (let i = 0; i < text.length; i++) {
+        element.textContent += text[i];
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        await new Promise(resolve => setTimeout(resolve, speed));
     }
-    
-    if (lowerMessage.includes('relax') || lowerMessage.includes('calm')) {
-        return "I can help you relax. Let's try a simple breathing technique: Breathe in slowly for 4 counts, hold for 4, then exhale for 4. Would you like me to guide you through this, or would you prefer to try one of our calming mini-games?";
-    }
-    
-    if (lowerMessage.includes('sleep')) {
-        return "Sleep issues can be really challenging. Creating a calming bedtime routine can help. Would you like some suggestions for better sleep hygiene, or would you prefer to explore our relaxing videos and stretching exercises?";
-    }
-    
-    if (lowerMessage.includes('talk')) {
-        return "I'm here to listen. Take your time and share whatever feels right. What's been weighing on you?";
-    }
-    
-    if (lowerMessage.includes('breathing')) {
-        return "Great choice! Let's start with a simple 4-4-4 breathing pattern. I'll guide you: Breathe in for 4 counts... Hold for 4... Breathe out for 4. Ready to begin?";
-    }
-    
-    if (lowerMessage.includes('affirmation')) {
-        return "Positive affirmations can be powerful. Here's one for you: 'I am capable of handling whatever comes my way.' Would you like more affirmations, or would you prefer to create your own?";
-    }
-    
-    // Default response
-    return "Thank you for sharing that with me. I'm here to support you. How are you feeling right now, and what would be most helpful for you in this moment?";
 }
 
+// ===== HELPER FUNCTION TO SHOW SYSTEM MESSAGES =====
+function showSystemMessage(text) {
+    const systemDiv = document.createElement('div');
+    systemDiv.className = 'system-message';
+    systemDiv.textContent = text;
+    
+    if (messagesArea) {
+        messagesArea.appendChild(systemDiv);
+        
+        setTimeout(() => {
+            systemDiv.style.opacity = '0';
+            systemDiv.style.transition = 'opacity 0.3s';
+            setTimeout(() => systemDiv.remove(), 300);
+        }, 5000);
+    }
+}
+
+// ===== TENSORFLOW INITIALIZATION =====
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 Initializing app...');
+    
+    if (window.tensorFlowClassifier) {
+        console.log('🧠 TensorFlow classifier found, initializing...');
+        
+        showSystemMessage('🧠 Loading AI mood detection... (10-15 seconds)');
+        
+        const success = await window.tensorFlowClassifier.initialize();
+        
+        if (success) {
+            useTensorFlow = true;
+            console.log('✅ Using TensorFlow for mood classification');
+            showSystemMessage('✅ Advanced mood detection ready!');
+        } else {
+            useTensorFlow = false;
+            console.log('⚠️ Falling back to keyword-based classification');
+            showSystemMessage('⚠️ Using basic mood detection');
+        }
+    } else {
+        console.log('📝 TensorFlow not available, using keyword-based classification');
+    }
+});
+
 // ===== INITIALIZATION =====
-console.log('Wellness AI initialized!');
-console.log('⚠️ Remember to add your Claude API key in the CONFIG object');
+console.log('🧠 Enhanced Wellness AI initialized!');
+console.log('✅ Mood classification active');
+console.log('✅ Slang recognition enabled');
+console.log('✅ Streaming responses ready');
+console.log('✅ Feature recommendation system online');
+console.log('🔄 Using proxy server at', CONFIG.CLAUDE_API_URL);

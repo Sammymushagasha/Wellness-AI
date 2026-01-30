@@ -1,7 +1,7 @@
 // ===== CONFIGURATION =====
 const CONFIG = {
     // TODO: Add your Claude API key here when ready
-    CLAUDE_API_KEY: 'YOUR_API_KEY_HERE', // ⚠️ REPLACE THIS WITH YOUR ACTUAL API KEY
+    CLAUDE_API_KEY: 'YOUR_API_KEY_HERE',
     CLAUDE_API_URL: 'https://api.anthropic.com/v1/messages',
     CLAUDE_MODEL: 'claude-sonnet-4-20250514'
 };
@@ -160,7 +160,7 @@ function addTypingIndicator() {
 // ===== CLAUDE API CALL =====
 async function callClaudeAPI(userMessage) {
     // Check if API key is set
-    if (CONFIG.CLAUDE_API_KEY === 'YOUR_API_KEY_HERE') {
+    if (!CONFIG.CLAUDE_API_KEY || CONFIG.CLAUDE_API_KEY === 'YOUR_API_KEY_HERE') {
         // Return a placeholder response for testing
         console.warn('⚠️ API Key not set. Using placeholder response.');
         return await simulateAIResponse(userMessage);

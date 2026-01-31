@@ -15,11 +15,7 @@
             color: #5A4682;
         }
 
-        /* Sidebar pastel variant */
-        body.hide-lava .sidebar {
-            background: rgba(250, 245, 255, 0.95);
-            border-right: 1px solid rgba(200, 190, 220, 0.3);
-        }
+        /* Sidebar removed — pastel variant styles not needed on this page */
 
         body.hide-lava .logo h1 {
             color: #64507E;
@@ -94,33 +90,8 @@
         body.hide-lava .main-greeting { color: #5A4682; text-align: center; margin-top: 0; }
         body.hide-lava .sub-greeting { color: #826EA0; text-align: center; margin-bottom: 0; }
 
-        /* Sidebar collapse behavior */
-        .sidebar {
-            transition: width 0.35s ease, opacity 0.35s ease, transform 0.35s ease, padding 0.35s ease;
-            overflow: hidden;
-            position: relative; /* for the handle */
-        }
-
-        .sidebar.collapsed {
-            width: 0 !important;
-            min-width: 0 !important;
-            padding: 0 !important;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateX(-6px);
-        }
-
-        .sidebar.collapsed .logo,
-        .sidebar.collapsed .nav-menu {
-            display: none;
-        }
-
-
-
-        /* Slightly shift main content when sidebar is collapsed (so it feels roomy) */
-        body.sidebar-collapsed .main-content {
-            padding-left: 20px;
-        }
+        /* Sidebar removed for mini-games — no collapse behavior needed */
+        /* (Removed .sidebar styles to ensure a distraction-free fullscreen game) */
 
         /* Laser canvas overlay */
         #laserCanvas {
@@ -190,31 +161,7 @@
         body.hide-lava .main-greeting { color: #5A4682; text-align: center; margin-top: 0; }
         body.hide-lava .sub-greeting { color: #826EA0; text-align: center; margin-bottom: 0; }
 
-        /* Sidebar collapse behavior */
-        .sidebar {
-            transition: width 0.35s ease, opacity 0.35s ease, transform 0.35s ease, padding 0.35s ease;
-            overflow: hidden;
-            position: relative; /* for the handle */
-        }
-
-        .sidebar.collapsed {
-            width: 0 !important;
-            min-width: 0 !important;
-            padding: 0 !important;
-            opacity: 0;
-            pointer-events: none;
-            transform: translateX(-6px);
-        }
-
-        .sidebar.collapsed .logo,
-        .sidebar.collapsed .nav-menu {
-            display: none;
-        }
-
-        /* Slightly shift main content when sidebar is collapsed (so it feels roomy) */
-        body.sidebar-collapsed .main-content {
-            padding-left: 20px;
-        }
+        /* Sidebar removed for mini-games — duplicate rules removed */
 
         /* Game canvas */
         #gameCanvas {
@@ -370,51 +317,7 @@
         <canvas id="lavaCanvas"></canvas>
     </div>
 
-    <!-- Left Sidebar (same structure as index) -->
-    <aside class="sidebar">
-        <div class="logo">
-            <h1>Wellness AI</h1>
-        </div>
-        <div class="divider"></div>
-        
-        <nav class="nav-menu">
-            <a class="nav-item" href="index.html" data-page="chat">
-                <div class="nav-content">
-                    <span class="nav-title">AI Chat</span>
-                    <span class="nav-desc">Talk with empathetic AI</span>
-                </div>
-            </a>
-            
-            <a class="nav-item active" data-page="games" href="mini-games.html">
-                <div class="nav-content">
-                    <span class="nav-title">Mini Games</span>
-                    <span class="nav-desc">Relaxing activities</span>
-                </div>
-            </a>
-            
-            <a class="nav-item" data-page="videos" href="calm-videos.html">
-                <div class="nav-content">
-                    <span class="nav-title">Calm Videos</span>
-                    <span class="nav-desc">Soothing visuals</span>
-                </div>
-            </a>
-            
-            <a class="nav-item" data-page="stretching" href="physical.html">
-                <div class="nav-content">
-                    <span class="nav-title">Take a Breather</span>
-                    <span class="nav-desc">Breathing Exercise</span>
-                </div>
-            </a>
-            
-            <button class="nav-item" data-page="tracker">
-                <div class="nav-content">
-                    <span class="nav-title">Mood Tracker</span>
-                    <span class="nav-desc">Track your feelings</span>
-                </div>
-            </button>
-            
-        </nav>
-    </aside>
+    <!-- Sidebar removed for full-screen game (kept intentionally empty) -->
 
     <!-- Game HUD -->
     <div class="game-hud">
@@ -1030,12 +933,7 @@
             const startPrompt = document.getElementById('startPrompt');
             if (startPrompt) startPrompt.style.display = 'none';
 
-            // Hide sidebar for distraction-free play
-            const sidebar = document.querySelector('.sidebar');
-            if (sidebar) {
-                sidebar.classList.add('collapsed');
-                document.body.classList.add('sidebar-collapsed');
-            }
+            // No sidebar on this page — game runs fullscreen
 
             // Hide game over overlay if visible
             const overlay = document.getElementById('gameOverOverlay');

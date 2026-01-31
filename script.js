@@ -360,6 +360,9 @@ function classifyMoodKeyword(text) {
 // ===== NAVIGATION =====
 navItems.forEach(item => {
     item.addEventListener('click', () => {
+        if (item.tagName === 'A' && item.getAttribute('href')) {
+            return;
+        }
         navItems.forEach(nav => nav.classList.remove('active'));
         item.classList.add('active');
         
@@ -562,11 +565,11 @@ function addTypingIndicator() {
     if (lottieHost) {
         if (customElements.get('dotlottie-wc')) {
             const player = document.createElement('dotlottie-wc');
-            player.setAttribute('src', 'https://lottie.host/7fc059bc-5224-4809-ab12-e22744f954e2/3QgPg6eN8d.lottie');
+            player.setAttribute('src', 'https://lottie.host/52316eeb-a923-4457-af1d-12e5189fd80a/JnphYirdxq.lottie');
             player.setAttribute('autoplay', '');
             player.setAttribute('loop', '');
-            player.style.width = '90px';
-            player.style.height = '36px';
+            player.style.width = '260px';
+            player.style.height = '110px';
             lottieHost.appendChild(player);
         }
     }

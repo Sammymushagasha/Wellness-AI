@@ -194,6 +194,10 @@ let streamingMessage = null;
 let useTensorFlow = false;
 let aiMode = 'regular';
 let pendingBreatherConsent = false;
+let pendingGameConsent = false;
+let pendingCalmVideosConsent = false;
+let lastJournalMatchId = null;
+let lastJournalMatchText = '';
 
 // ===== DOM ELEMENTS =====
 const navItems = document.querySelectorAll('.nav-item');
@@ -257,11 +261,102 @@ function isNegative(text) {
     return NEGATIVE_KEYWORDS.some(keyword => normalized.includes(keyword));
 }
 
+const GAME_KEYWORDS = [
+    'game', 'games', 'play a game', 'mini game', 'mini games', 'play',
+    'distract', 'distraction', 'take my mind off', 'take my mind off it',
+    'bored', 'restless', 'need a break', 'need a distraction'
+];
+
+function isGameTrigger(text) {
+    const normalized = text.toLowerCase();
+    return GAME_KEYWORDS.some(keyword => normalized.includes(keyword));
+}
+
+const CALM_VIDEO_KEYWORDS = [
+    'calm video', 'calm videos', 'relaxing video', 'relaxing videos',
+    'soothing videos', 'soothing video', 'watch something calming',
+    'calm visuals', 'relaxing visuals', 'calming videos',
+    'videos you have', 'videos in the app', 'see the videos', 'see videos',
+    'show me the videos', 'show me videos', 'your videos', 'app videos'
+];
+
+function isCalmVideosTrigger(text) {
+    const normalized = text.toLowerCase();
+    return CALM_VIDEO_KEYWORDS.some(keyword => normalized.includes(keyword));
+}
+
 function openBreatherTab() {
     showSystemMessage('Opening Take a Breather...');
     setTimeout(() => {
         window.location.href = 'physical.html';
     }, 300);
+}
+
+function openMiniGames() {
+    showSystemMessage('Opening Mini Games...');
+    setTimeout(() => {
+        window.location.href = 'mini-games.html';
+    }, 300);
+}
+
+function openCalmVideos() {
+    showSystemMessage('Opening Calm Videos...');
+    setTimeout(() => {
+        window.location.href = 'calm-videos.html';
+    }, 300);
+}
+
+// ===== JOURNAL (MOOD TRACKER) MATCHING =====
+const STOPWORDS = new Set([
+    'the', 'and', 'that', 'this', 'with', 'about', 'from', 'have', 'just', 'like',
+    'feel', 'feels', 'feeling', 'today', 'thing', 'things', 'there', 'they', 'them',
+    'what', 'when', 'where', 'which', 'who', 'why', 'how', 'your', 'you', 'yours',
+    'im', 'i', 'me', 'my', 'mine', 'we', 'us', 'our', 'ours', 'are', 'was', 'were',
+    'been', 'being', 'into', 'over', 'under', 'again', 'more', 'very', 'really'
+]);
+
+function getJournalEntries() {
+    try {
+        return JSON.parse(localStorage.getItem('journalEntries')) || [];
+    } catch (err) {
+        return [];
+    }
+}
+
+function extractKeywords(text) {
+    return text
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .split(/\s+/)
+        .filter(word => word.length >= 4 && !STOPWORDS.has(word));
+}
+
+function findJournalMatch(text) {
+    const entries = getJournalEntries();
+    if (!entries.length) return null;
+
+    const keywords = extractKeywords(text);
+    if (!keywords.length) return null;
+
+    let best = null;
+    let bestScore = 0;
+
+    entries.forEach(entry => {
+        const haystack = `${entry.title} ${entry.content}`.toLowerCase();
+        let score = 0;
+        keywords.forEach(word => {
+            if (haystack.includes(word)) score += 1;
+        });
+        if (score > bestScore) {
+            bestScore = score;
+            best = entry;
+        }
+    });
+
+    if (best && bestScore > 0) {
+        return best;
+    }
+    return null;
 }
 
 // ===== SLANG NORMALIZATION =====
@@ -446,6 +541,14 @@ async function sendMessage() {
         return;
     }
 
+    const journalMatch = findJournalMatch(userMessage);
+    if (journalMatch && journalMatch.id !== lastJournalMatchId) {
+        const noteTitle = journalMatch.title || 'your note';
+        const noteSnippet = (journalMatch.content || '').slice(0, 120).trim();
+        lastJournalMatchId = journalMatch.id;
+        lastJournalMatchText = noteSnippet || noteTitle;
+    }
+
     if (pendingBreatherConsent && isAffirmative(userMessage)) {
         const confirmText = 'Got it. Opening the Take a Breather tab now.';
         addMessage(confirmText, 'ai');
@@ -459,6 +562,38 @@ async function sendMessage() {
         });
         pendingBreatherConsent = false;
         openBreatherTab();
+        return;
+    }
+
+    if (pendingGameConsent && isAffirmative(userMessage)) {
+        const confirmText = 'Great. Opening Mini Games now.';
+        addMessage(confirmText, 'ai');
+        conversationHistory.push({
+            role: 'user',
+            content: userMessage
+        });
+        conversationHistory.push({
+            role: 'assistant',
+            content: confirmText
+        });
+        pendingGameConsent = false;
+        openMiniGames();
+        return;
+    }
+
+    if (pendingCalmVideosConsent && isAffirmative(userMessage)) {
+        const confirmText = 'Got it. Opening Calm Videos now.';
+        addMessage(confirmText, 'ai');
+        conversationHistory.push({
+            role: 'user',
+            content: userMessage
+        });
+        conversationHistory.push({
+            role: 'assistant',
+            content: confirmText
+        });
+        pendingCalmVideosConsent = false;
+        openCalmVideos();
         return;
     }
 
@@ -477,6 +612,36 @@ async function sendMessage() {
         return;
     }
 
+    if (pendingGameConsent && isNegative(userMessage)) {
+        const declineText = 'No worries. We can try a game anytime.';
+        addMessage(declineText, 'ai');
+        conversationHistory.push({
+            role: 'user',
+            content: userMessage
+        });
+        conversationHistory.push({
+            role: 'assistant',
+            content: declineText
+        });
+        pendingGameConsent = false;
+        return;
+    }
+
+    if (pendingCalmVideosConsent && isNegative(userMessage)) {
+        const declineText = 'No problem. We can try some calm videos anytime.';
+        addMessage(declineText, 'ai');
+        conversationHistory.push({
+            role: 'user',
+            content: userMessage
+        });
+        conversationHistory.push({
+            role: 'assistant',
+            content: declineText
+        });
+        pendingCalmVideosConsent = false;
+        return;
+    }
+
     if (isBreatherTrigger(userMessage)) {
         const offerText = 'Want me to open the Take a Breather tab for you?';
         addMessage(offerText, 'ai');
@@ -489,6 +654,36 @@ async function sendMessage() {
             content: offerText
         });
         pendingBreatherConsent = true;
+        return;
+    }
+
+    if (isGameTrigger(userMessage)) {
+        const offerText = 'Want to play a mini game to help reset or distract?';
+        addMessage(offerText, 'ai');
+        conversationHistory.push({
+            role: 'user',
+            content: userMessage
+        });
+        conversationHistory.push({
+            role: 'assistant',
+            content: offerText
+        });
+        pendingGameConsent = true;
+        return;
+    }
+
+    if (isCalmVideosTrigger(userMessage)) {
+        const offerText = 'Want me to open the Calm Videos tab for you?';
+        addMessage(offerText, 'ai');
+        conversationHistory.push({
+            role: 'user',
+            content: userMessage
+        });
+        conversationHistory.push({
+            role: 'assistant',
+            content: offerText
+        });
+        pendingCalmVideosConsent = true;
         return;
     }
 
@@ -623,6 +818,12 @@ SUGGESTED GUIDANCE: ${featureRec}
 When responding, subtly guide the user toward trying one of these features: ${currentMood.features.join(', ')}.
 Use natural, conversational language to suggest these options without being pushy.`;
     }
+
+    let journalContext = '';
+    if (lastJournalMatchText) {
+        journalContext = `\n\nUSER JOURNAL CONTEXT:
+The user previously wrote about: "${lastJournalMatchText}". If relevant, acknowledge it gently and ask if it relates.`;
+    }
     
     const crisisPrompt = `CRISIS SAFETY RULE:
 If the user mentions suicide, self-harm, or wanting to die (even joking), respond immediately with:
@@ -671,6 +872,7 @@ GUIDELINES:
 - Encourage professional help for serious concerns
 - Match the user's communication style (casual, formal, etc.)
 ${moodContext}
+${journalContext}
 
 Remember: You're a supportive companion helping users feel heard and guiding them to helpful resources.`;
 }

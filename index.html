@@ -16,6 +16,11 @@
     <script src="tensorflow-mood-classifier.js"></script>
 </head>
 <body>
+    <!-- Lava lamp background -->
+    <div class="lava-wrap">
+        <canvas id="lavaCanvas"></canvas>
+    </div>
+
     <!-- Left Sidebar -->
     <aside class="sidebar">
         <div class="logo">
@@ -70,11 +75,6 @@
 
     <!-- Main Chat Area -->
     <main class="main-content">
-        <!-- Floating background blobs -->
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-        <div class="blob blob-3"></div>
-
         <!-- Empty State Content -->
         <div class="empty-state">
             <h2 class="main-greeting">What's on your mind?</h2>
@@ -120,6 +120,7 @@
         </div>
     </main>
 
+    <script src="lava.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

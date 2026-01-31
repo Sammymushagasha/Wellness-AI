@@ -1,10 +1,16 @@
 // Simplified lava lamp animation (metaballs)
-const canvas = document.getElementById('lavaCanvas');
-const ctx = canvas.getContext('2d', { alpha: false });
+// If a page adds the `hide-lava` class to the <body>, skip the animation (useful for pages like mini-games)
+if (document.body && document.body.classList && document.body.classList.contains('hide-lava')) {
+    console.log('Lava animation disabled on this page');
+    // Provide a no-op API so other scripts that may expect these exist won't break
+    window.lavaNoop = true;
+} else {
+    const canvas = document.getElementById('lavaCanvas');
+    const ctx = canvas.getContext('2d', { alpha: false });
 
-// Enable image smoothing for anti-aliasing
-ctx.imageSmoothingEnabled = true;
-ctx.imageSmoothingQuality = 'high';
+    // Enable image smoothing for anti-aliasing
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
 let width = window.innerWidth;
 let height = window.innerHeight;
@@ -104,3 +110,5 @@ window.addEventListener('resize', () => {
 });
 
 render();
+}
+

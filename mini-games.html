@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Games — Wellness AI</title>
+
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Page-specific pastel theme & decorative blobs (overrides only for this page) -->
+    <style>
+        /* Page-only overrides */
+        body.hide-lava {
+            background: linear-gradient(180deg, #F0EBF8 0%, #DCD2F0 100%);
+            color: #5A4682;
+        }
+
+        /* Sidebar pastel variant */
+        body.hide-lava .sidebar {
+            background: rgba(250, 245, 255, 0.95);
+            border-right: 1px solid rgba(200, 190, 220, 0.3);
+        }
+
+        body.hide-lava .logo h1 {
+            color: #64507E;
+        }
+
+        body.hide-lava .divider {
+            background: rgba(200, 190, 220, 0.5);
+        }
+
+        body.hide-lava .nav-item:hover {
+            background: rgba(200, 180, 230, 0.08);
+        }
+
+        body.hide-lava .nav-item.active {
+            background: rgba(200, 180, 230, 0.22);
+        }
+
+        body.hide-lava .nav-title {
+            color: #503C78;
+        }
+
+        body.hide-lava .nav-desc {
+            color: #826EA0;
+        }
+
+        /* Floating decorative blobs */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .blob-1 {
+            width: 180px;
+            height: 180px;
+            background: rgba(240, 230, 255, 0.8);
+            top: 10%;
+            left: 25%;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .blob-2 {
+            width: 220px;
+            height: 220px;
+            background: rgba(220, 240, 250, 0.7);
+            top: 50%;
+            left: 15%;
+            animation: float 25s infinite ease-in-out 5s;
+        }
+
+        .blob-3 {
+            width: 150px;
+            height: 150px;
+            background: rgba(250, 240, 245, 0.8);
+            bottom: 15%;
+            right: 20%;
+            animation: float 18s infinite ease-in-out 10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        /* Make sure blobs sit behind content but above the lava canvas (which is hidden here) */
+        body.hide-lava .main-content { z-index: 1; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        body.hide-lava .empty-state { z-index: 2; width: 100%; max-width: 800px; pointer-events: none; }
+        body.hide-lava .main-greeting { color: #5A4682; text-align: center; margin-top: 0; }
+        body.hide-lava .sub-greeting { color: #826EA0; text-align: center; margin-bottom: 0; }
+
+        /* Sidebar collapse behavior */
+        .sidebar {
+            transition: width 0.35s ease, opacity 0.35s ease, transform 0.35s ease, padding 0.35s ease;
+            overflow: hidden;
+            position: relative; /* for the handle */
+        }
+
+        .sidebar.collapsed {
+            width: 0 !important;
+            min-width: 0 !important;
+            padding: 0 !important;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(-6px);
+        }
+
+        .sidebar.collapsed .logo,
+        .sidebar.collapsed .nav-menu {
+            display: none;
+        }
+
+
+
+        /* Slightly shift main content when sidebar is collapsed (so it feels roomy) */
+        body.sidebar-collapsed .main-content {
+            padding-left: 20px;
+        }
+
+        /* Laser canvas overlay */
+        #laserCanvas {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            pointer-events: none;
+        }
+    </style>
+
+    <!-- Optional: keep TensorFlow scripts for consistent layout/behaviors -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder"></script>
+    <script src="tensorflow-mood-classifier.js"></script>
+
+    <!-- Lottie for nicer typing indicator (kept for consistency) -->
+    <script type="module" src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.11/dist/dotlottie-wc.js"></script>
+</head>
+<body class="hide-lava">
+    <!-- Lava lamp background (disabled on this page) -->
+    <div class="lava-wrap" aria-hidden="true">
+        <canvas id="lavaCanvas"></canvas>
+    </div>
+
+    <!-- Left Sidebar (same structure as index) -->
+    <aside class="sidebar">
+        <div class="logo">
+            <h1>Wellness AI</h1>
+        </div>
+        <div class="divider"></div>
+        
+        <nav class="nav-menu">
+            <a class="nav-item" href="index.html" data-page="chat">
+                <div class="nav-content">
+                    <span class="nav-title">AI Chat</span>
+                    <span class="nav-desc">Talk with empathetic AI</span>
+                </div>
+            </a>
+            
+            <a class="nav-item active" data-page="games" href="mini-games.html">
+                <div class="nav-content">
+                    <span class="nav-title">Mini Games</span>
+                    <span class="nav-desc">Relaxing activities</span>
+                </div>
+            </a>
+            
+            <button class="nav-item" data-page="videos">
+                <div class="nav-content">
+                    <span class="nav-title">Calm Videos</span>
+                    <span class="nav-desc">Soothing visuals</span>
+                </div>
+            </button>
+            
+            <a class="nav-item" data-page="stretching" href="physical.html">
+                <div class="nav-content">
+                    <span class="nav-title">Take a Breather</span>
+                    <span class="nav-desc">Breathing Exercise</span>
+                </div>
+            </a>
+            
+            <button class="nav-item" data-page="tracker">
+                <div class="nav-content">
+                    <span class="nav-title">Mood Tracker</span>
+                    <span class="nav-desc">Track your feelings</span>
+                </div>
+            </button>
+            
+            <button class="nav-item" data-page="settings">
+                <div class="nav-content">
+                    <span class="nav-title">Settings</span>
+                    <span class="nav-desc">Preferences</span>
+                </div>
+            </button>
+        </nav>
+    </aside>
+
+
+    <!-- Main area: decorative blobs + centered welcome prompt -->
+    <main class="main-content">
+        <!-- Decorative floating blobs only (stylistic, no text/content) -->
+        <div class="blob blob-1" aria-hidden="true"></div>
+        <div class="blob blob-2" aria-hidden="true"></div>
+        <div class="blob blob-3" aria-hidden="true"></div>
+        <!-- Laser canvas (covers main area) -->
+        <canvas id="laserCanvas" aria-hidden="true"></canvas>
+        <!-- Centered prompt (no actionable controls) -->
+        <div class="empty-state" aria-hidden="false" style="z-index:2; pointer-events: none;">
+            <h2 class="main-greeting">Welcome to The Mini Games</h2>
+            <p class="sub-greeting">Type Any Key</p>
+        </div>
+    </main>
+
+    <script src="lava.js"></script>
+    <script src="script.js"></script>
+    <script>
+    (function(){
+        const canvas = document.getElementById('laserCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+
+        function resize(){
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const particles = [];
+        const MAX_PARTICLES = 200;
+
+        // Audio setup for a short, impactful laser sound
+        let audioCtx = null;
+        function playLaserSound(){
+            try{
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = audioCtx.currentTime;
+                const o = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                o.type = 'sawtooth';
+                o.frequency.setValueAtTime(220, now);
+                o.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+                g.gain.setValueAtTime(0.0001, now);
+                g.gain.exponentialRampToValueAtTime(0.18, now + 0.01);
+                g.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+                o.connect(g);
+                g.connect(audioCtx.destination);
+                o.start(now);
+                o.stop(now + 0.35);
+            }catch(err){ /* ignore audio errors */ }
+        }
+
+        // Fixed dark purple laser color
+        const laserColor = { h: 272, s: 70, l: 35 };
+
+        function hsla(col, a){
+            return `hsla(${col.h}, ${col.s}%, ${col.l}%, ${a})`;
+        }
+
+        // Spawn a single beam laser at a random position (one per key press)
+        function spawnLaser(){
+            const p = {
+                x: Math.random() * canvas.clientWidth,
+                y: Math.random() * canvas.clientHeight,
+                r: 8,               // base size used to compute length
+                dr: 22 + Math.random()*8, // faster growth rate for bold look
+                alpha: 1,
+                da: 0.009 + Math.random()*0.018,
+                color: laserColor,
+                type: 'beam',
+                angle: Math.random() * Math.PI * 2,
+                backR: 160 + Math.random()*260
+            };
+            particles.push(p);
+            while (particles.length > MAX_PARTICLES) particles.shift();
+            // play a short laser sound
+            playLaserSound();
+        }
+
+        function animate(){
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.globalCompositeOperation = 'lighter';
+            for (let i=particles.length-1;i>=0;i--){
+                const p = particles[i];
+                p.r += p.dr;
+                p.alpha -= p.da;
+                if (p.alpha <= 0){ particles.splice(i,1); continue; }
+
+                // Backlight radial gradient
+                const backGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.backR);
+                backGrad.addColorStop(0, hsla(p.color, p.alpha * 0.12));
+                backGrad.addColorStop(0.5, hsla(p.color, p.alpha * 0.06));
+                backGrad.addColorStop(1, hsla(p.color, 0));
+                ctx.fillStyle = backGrad;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.backR, 0, Math.PI*2);
+                ctx.fill();
+
+                // Beam drawing (consistent dark purple)
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.angle);
+                const len = Math.min( Math.max(160, p.r * 6), canvas.clientWidth );
+
+                // Core (pill-shaped, much thicker)
+                ctx.fillStyle = hsla(p.color, Math.min(1, p.alpha * 0.95));
+                {
+                    const half = len/2;
+                    const halfH = 18; // half of core height (36)
+                    ctx.beginPath();
+                    ctx.moveTo(-half + halfH, -halfH);
+                    ctx.lineTo(half - halfH, -halfH);
+                    ctx.arc(half - halfH, 0, halfH, -Math.PI/2, Math.PI/2);
+                    ctx.lineTo(-half + halfH, halfH);
+                    ctx.arc(-half + halfH, 0, halfH, Math.PI/2, -Math.PI/2);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                // strong glow (pill-shaped, larger)
+                ctx.globalAlpha = Math.min(1, p.alpha * 0.6);
+                ctx.fillStyle = hsla(p.color, Math.min(1, p.alpha * 0.38));
+                {
+                    const half = len/2;
+                    const halfH = 30; // half of glow height (60)
+                    ctx.beginPath();
+                    ctx.moveTo(-half + halfH, -halfH);
+                    ctx.lineTo(half - halfH, -halfH);
+                    ctx.arc(half - halfH, 0, halfH, -Math.PI/2, Math.PI/2);
+                    ctx.lineTo(-half + halfH, halfH);
+                    ctx.arc(-half + halfH, 0, halfH, Math.PI/2, -Math.PI/2);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+
+                // outer halo (pill-shaped, larger)
+                ctx.globalAlpha = Math.min(1, p.alpha * 0.22);
+                ctx.fillStyle = hsla(p.color, Math.min(1, p.alpha * 0.14));
+                {
+                    const half = len/2;
+                    const halfH = 80; // half of halo height (160)
+                    // clamp halfH so it doesn't exceed half length
+                    const clampHalfH = Math.min(halfH, Math.max(8, half - 6));
+                    ctx.beginPath();
+                    ctx.moveTo(-half + clampHalfH, -clampHalfH);
+                    ctx.lineTo(half - clampHalfH, -clampHalfH);
+                    ctx.arc(half - clampHalfH, 0, clampHalfH, -Math.PI/2, Math.PI/2);
+                    ctx.lineTo(-half + clampHalfH, clampHalfH);
+                    ctx.arc(-half + clampHalfH, 0, clampHalfH, Math.PI/2, -Math.PI/2);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                ctx.restore();
+                ctx.globalAlpha = 1;
+            }
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        let cleared = false;
+        // Only spawn one laser per key press; remove prompt on first press.
+        // On key press, also hide the sidebar and schedule it to reappear after 5s of inactivity.
+        function onKey(e){
+            if (!cleared){
+                const empty = document.querySelector('.empty-state');
+                if (empty) empty.style.display = 'none';
+                cleared = true;
+            }
+
+            spawnLaser();
+
+            // hide the sidebar
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar && !sidebar.classList.contains('collapsed')){
+                sidebar.classList.add('collapsed');
+                document.body.classList.add('sidebar-collapsed');
+            }
+
+            // reset/show timer
+            if (window.__miniSidebarTimer) clearTimeout(window.__miniSidebarTimer);
+            window.__miniSidebarTimer = setTimeout(()=>{
+                if (sidebar){
+                    sidebar.classList.remove('collapsed');
+                    document.body.classList.remove('sidebar-collapsed');
+                }
+            }, 3000);
+        }
+
+        document.addEventListener('keydown', onKey);
+
+
+    })();
+    </script>
+</body>
+</html>

@@ -55,6 +55,13 @@ body {
     color: #FFFFFF;
 }
 
+.logo-image {
+    display: block;
+    width: 180px;
+    max-width: 100%;
+    height: auto;
+}
+
 .divider {
     height: 1px;
     background: rgba(255, 255, 255, 0.2);

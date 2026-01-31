@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const phrases = [
         "What's on your mind?",
         "How are you feeling today?",
-        "Let's talk about you"
+        
     ];
     
     let currentPhrase = 0;

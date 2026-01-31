@@ -64,6 +64,30 @@ const chatContainer = document.querySelector('.chat-container');
 const promptBubbles = document.querySelectorAll('.prompt-bubble');
 const modeOptions = document.querySelectorAll('.mode-option');
 
+// ===== CRISIS SUPPORT DETECTION =====
+const CRISIS_KEYWORDS = [
+    'suicide', 'suicidal', 'kill myself', 'killing myself', 'end my life', 'end it all',
+    'self harm', 'self-harm', 'hurt myself', 'harm myself', 'cut myself', 'cutting',
+    'overdose', 'take my life',
+    'shoot someone', 'shooting', 'mass shooting', 'school shooting',
+    'stab someone', 'stabbing',
+    'burn it down', 'set fire', 'start a fire', 'big fire', 'arson',
+    'bomb', 'blow up'
+];
+
+function isCrisisMessage(text) {
+    const normalized = text.toLowerCase();
+    return CRISIS_KEYWORDS.some(keyword => normalized.includes(keyword));
+}
+
+function getCrisisResponse() {
+    return [
+        "Hey, I’m really glad you told me. You matter, and I’m here with you.",
+        "If you’re in the U.S., you can call or text 988 to reach the Suicide & Crisis Lifeline—it's free, 24/7. If you’re in immediate danger, call 911.",
+        "If you’re outside the U.S., I can help find a local crisis number. You don’t have to go through this alone."
+    ].join('\n\n');
+}
+
 // ===== SLANG NORMALIZATION =====
 const SLANG_DICTIONARY = {
     'cant': "can't", 'wont': "won't", 'dont': "don't", 'isnt': "isn't",
@@ -227,7 +251,21 @@ async function sendMessage() {
     sendButton.disabled = true;
     
     addMessage(userMessage, 'user');
-    
+
+    if (isCrisisMessage(userMessage)) {
+        const crisisText = getCrisisResponse();
+        addMessage(crisisText, 'ai');
+        conversationHistory.push({
+            role: 'user',
+            content: userMessage
+        });
+        conversationHistory.push({
+            role: 'assistant',
+            content: crisisText
+        });
+        return;
+    }
+
     const moodAnalysis = await classifyMood(userMessage);
     if (moodAnalysis) {
         currentMood = moodAnalysis;
@@ -292,21 +330,22 @@ function addTypingIndicator() {
     typingDiv.innerHTML = `
         <div class="message-bubble">
             <div class="lottie-typing" aria-hidden="true"></div>
-            <span class="typing-label">Thinking</span>
         </div>
     `;
     messagesArea.appendChild(typingDiv);
     chatContainer.scrollTop = chatContainer.scrollHeight;
 
     const lottieHost = typingDiv.querySelector('.lottie-typing');
-    if (window.lottie && lottieHost) {
-        window.lottie.loadAnimation({
-            container: lottieHost,
-            renderer: 'svg',
-            loop: true,
-            autoplay: true,
-            path: 'https://assets9.lottiefiles.com/packages/lf20_usmfx6bp.json'
-        });
+    if (lottieHost) {
+        if (customElements.get('dotlottie-wc')) {
+            const player = document.createElement('dotlottie-wc');
+            player.setAttribute('src', 'https://lottie.host/7fc059bc-5224-4809-ab12-e22744f954e2/3QgPg6eN8d.lottie');
+            player.setAttribute('autoplay', '');
+            player.setAttribute('loop', '');
+            player.style.width = '90px';
+            player.style.height = '36px';
+            lottieHost.appendChild(player);
+        }
     }
 
     return typingDiv;
@@ -359,6 +398,13 @@ When responding, subtly guide the user toward trying one of these features: ${cu
 Use natural, conversational language to suggest these options without being pushy.`;
     }
     
+    const crisisPrompt = `CRISIS SAFETY RULE:
+If the user mentions suicide, self-harm, or wanting to die (even joking), respond immediately with:
+1) A brief, warm, uplifting message.
+2) Direct help info: If in the U.S., call/text 988. If in immediate danger, call 911.
+3) Offer to help find local resources if outside the U.S.
+Be calm, kind, and non-judgmental. Do not debate or minimize.`;
+
     const basePrompt = aiMode === 'friendly'
         ? `You are a close friend texting with the user. Be extremely friendly, casual, and expressive.
 YOUR ROLE:
@@ -380,6 +426,7 @@ YOUR ROLE:
  - Do not use emojis`;
 
     return `${basePrompt}
+${crisisPrompt}
 
 AVAILABLE WELLNESS FEATURES YOU CAN RECOMMEND:
 1. Breathing exercises - For anxiety, stress, panic

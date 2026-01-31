@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breathing Exercise - Wellness AI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #ffb3d9 0%, #ffd6e8 50%, #ffe6f0 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .pink-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        #pinkCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            opacity: 0.6;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 25px;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateX(-5px);
+        }
+        
+        body.completion-active .back-button {
+            display: none;
+        }
+
+        .content-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .welcome-screen, .breathing-screen, .completion-screen {
+            text-align: center;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .breathing-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+        }
+        
+        .completion-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-title {
+            font-size: 48px;
+            font-weight: bold;
+            color: #FFFFFF;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            font-size: 20px;
+            color: #FFFFFF;
+            margin-bottom: 50px;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
+        }
+        
+        .completion-screen .subtitle:last-of-type {
+            margin-bottom: 50px;
+        }
+        
+        .stylish-message {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 22px;
+            font-style: italic;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+            color: #FFFFFF;
+            margin-bottom: 50px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .start-button {
+            padding: 18px 50px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            border-radius: 35px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #ff6b9d;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(255, 107, 157, 0.3);
+        }
+
+        .start-button:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 30px rgba(255, 107, 157, 0.4);
+        }
+
+        .instruction-text {
+            font-size: 32px;
+            font-weight: 600;
+            color: #FFFFFF;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            min-height: 50px;
+        }
+
+        .circle-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .breathing-circle {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(15px);
+            border: 4px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.5), 0 0 60px rgba(255, 182, 217, 0.3);
+            transition: all 4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .breathing-circle.breathe-in {
+            width: 280px;
+            height: 280px;
+            background: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.7), 0 0 100px rgba(255, 182, 217, 0.5);
+        }
+
+        .breathing-circle.breathe-out {
+            width: 100px;
+            height: 100px;
+        }
+
+        .breath-counter {
+            font-size: 18px;
+            color: #FFFFFF;
+            font-weight: 500;
+            text-shadow: 0 1px 5px rgba(0, 0, 0, 0.15);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .control-button {
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #ff6b9d;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-button:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateY(-2px);
+        }
+
+        .control-button.secondary {
+            background: rgba(255, 255, 255, 0.3);
+            color: #FFFFFF;
+        }
+
+        .completion-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .secondary-link {
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 25px;
+            font-size: 16px;
+            color: #FFFFFF;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="pink-background">
+        <canvas id="pinkCanvas"></canvas>
+    </div>
+
+    <a href="index.html" class="back-button" id="backButton">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back
+    </a>
+
+    <div class="content-container">
+        <div class="welcome-screen" id="welcomeScreen">
+            <h1 class="main-title">Life can be stressful</h1>
+            <p class="subtitle">Let's slow down for a bit</p>
+            <button class="start-button" id="startButton">Start Breathing</button>
+        </div>
+
+        <div class="breathing-screen" id="breathingScreen" style="display: none;">
+            <div class="instruction-text" id="instructionText">Breathe In</div>
+            <div class="circle-container">
+                <div class="breathing-circle" id="breathingCircle"></div>
+            </div>
+            <div class="breath-counter" id="breathCounter">Breath 1 of 5</div>
+            <div class="controls">
+                <button class="control-button" id="pauseButton">Pause</button>
+                <button class="control-button secondary" id="resetButton">Reset</button>
+            </div>
+        </div>
+
+        <div class="completion-screen" id="completionScreen" style="display: none;">
+            <h1 class="main-title">You've completed your breathing exercise!</h1>
+            <p class="stylish-message">Take a moment to notice how you feel</p>
+            <div class="completion-buttons">
+                <button class="start-button" id="restartButton">Do Another</button>
+                <a href="index.html" class="secondary-link">Return Home</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pink Blob Animation
+        const canvas = document.getElementById('pinkCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, blobs = [];
+
+        class Blob {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.radius = 100 + Math.random() * 150;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                const pinkShades = [
+                    'rgba(255, 182, 217, 0.4)',
+                    'rgba(255, 160, 200, 0.4)',
+                    'rgba(255, 192, 203, 0.4)',
+                    'rgba(255, 214, 232, 0.4)',
+                    'rgba(255, 140, 180, 0.4)'
+                ];
+                this.color = pinkShades[Math.floor(Math.random() * pinkShades.length)];
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < -this.radius || this.x > width + this.radius) this.vx *= -1;
+                if (this.y < -this.radius || this.y > height + this.radius) this.vy *= -1;
+                this.x = Math.max(-this.radius, Math.min(width + this.radius, this.x));
+                this.y = Math.max(-this.radius, Math.min(height + this.radius, this.y));
+            }
+            
+            draw() {
+                const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+                gradient.addColorStop(0, this.color);
+                gradient.addColorStop(1, 'rgba(255, 182, 217, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        function initBlobs() {
+            blobs = [];
+            for (let i = 0; i < 5; i++) blobs.push(new Blob());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            blobs.forEach(blob => { blob.update(); blob.draw(); });
+            requestAnimationFrame(animate);
+        }
+
+        initCanvas();
+        initBlobs();
+        animate();
+        window.addEventListener('resize', () => { initCanvas(); initBlobs(); });
+
+        // Breathing Exercise Logic
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const breathingScreen = document.getElementById('breathingScreen');
+        const completionScreen = document.getElementById('completionScreen');
+        const startButton = document.getElementById('startButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const resetButton = document.getElementById('resetButton');
+        const restartButton = document.getElementById('restartButton');
+        const instructionText = document.getElementById('instructionText');
+        const breathingCircle = document.getElementById('breathingCircle');
+        const breathCounter = document.getElementById('breathCounter');
+        const backButton = document.getElementById('backButton');
+
+        const BREATHE_IN_TIME = 4000;
+        const HOLD_IN_TIME = 3000; // 3 seconds
+        const BREATHE_OUT_TIME = 4000;
+        const HOLD_OUT_TIME = 2000; // 2 seconds pause before next breath
+        const TOTAL_BREATHS = 5;
+
+        let currentBreath = 0, isPaused = false, breathingTimeout, currentPhase = 'in';
+
+        startButton.addEventListener('click', () => {
+            document.body.classList.remove('completion-active');
+            welcomeScreen.style.display = 'none';
+            breathingScreen.style.display = 'flex';
+            currentBreath = 1;
+            updateCounter();
+            
+            // Clear instruction text and wait 2 seconds before starting
+            instructionText.textContent = '';
+            setTimeout(() => {
+                startBreathingCycle();
+            }, 2000);
+        });
+
+        pauseButton.addEventListener('click', () => {
+            isPaused = !isPaused;
+            pauseButton.textContent = isPaused ? 'Resume' : 'Pause';
+            if (isPaused) {
+                clearTimeout(breathingTimeout);
+            } else {
+                continueBreathingCycle();
+            }
+        });
+
+        resetButton.addEventListener('click', () => {
+            resetExercise();
+            welcomeScreen.style.display = 'block';
+            breathingScreen.style.display = 'none';
+        });
+
+        backButton.addEventListener('click', (event) => {
+            if (breathingScreen.style.display !== 'none') {
+                event.preventDefault();
+                resetExercise();
+                breathingScreen.style.display = 'none';
+                completionScreen.style.display = 'none';
+                welcomeScreen.style.display = 'block';
+            }
+        });
+
+        restartButton.addEventListener('click', () => {
+            document.body.classList.remove('completion-active');
+            completionScreen.style.display = 'none';
+            breathingScreen.style.display = 'flex';
+            document.querySelector('.back-button').style.display = 'flex';
+            currentBreath = 1;
+            updateCounter();
+            
+            // Clear instruction text and wait 2 seconds before starting
+            instructionText.textContent = '';
+            setTimeout(() => {
+                startBreathingCycle();
+            }, 2000);
+        });
+
+        function startBreathingCycle() {
+            isPaused = false;
+            pauseButton.textContent = 'Pause';
+            currentPhase = 'in';
+            breatheIn();
+        }
+
+        function continueBreathingCycle() {
+            switch(currentPhase) {
+                case 'in': breatheIn(); break;
+                case 'hold-in': holdIn(); break;
+                case 'out': breatheOut(); break;
+                case 'hold-out': holdOut(); break;
+            }
+        }
+
+        function breatheIn() {
+            if (isPaused) return;
+            currentPhase = 'in';
+            instructionText.textContent = 'Breathe In';
+            breathingCircle.classList.remove('breathe-out');
+            breathingCircle.classList.add('breathe-in');
+            breathingTimeout = setTimeout(() => { if (!isPaused) holdIn(); }, BREATHE_IN_TIME);
+        }
+
+        function holdIn() {
+            if (isPaused) return;
+            currentPhase = 'hold-in';
+            instructionText.textContent = 'Hold';
+            breathingTimeout = setTimeout(() => { if (!isPaused) breatheOut(); }, HOLD_IN_TIME);
+        }
+
+        function breatheOut() {
+            if (isPaused) return;
+            currentPhase = 'out';
+            instructionText.textContent = 'Breathe Out';
+            breathingCircle.classList.remove('breathe-in');
+            breathingCircle.classList.add('breathe-out');
+            breathingTimeout = setTimeout(() => { if (!isPaused) holdOut(); }, BREATHE_OUT_TIME);
+        }
+
+        function holdOut() {
+            if (isPaused) return;
+            currentPhase = 'hold-out';
+            instructionText.textContent = '';
+            breathingTimeout = setTimeout(() => { if (!isPaused) completeBreath(); }, HOLD_OUT_TIME);
+        }
+
+        function completeBreath() {
+            currentBreath++;
+            if (currentBreath <= TOTAL_BREATHS) {
+                updateCounter();
+                breatheIn();
+            } else {
+                completeExercise();
+            }
+        }
+
+        function updateCounter() {
+            breathCounter.textContent = `Breath ${currentBreath} of ${TOTAL_BREATHS}`;
+        }
+
+        function completeExercise() {
+            breathingScreen.style.display = 'none';
+            completionScreen.style.display = 'flex';
+            document.body.classList.add('completion-active');
+            resetExercise();
+        }
+
+        function resetExercise() {
+            clearTimeout(breathingTimeout);
+            currentBreath = 0;
+            isPaused = false;
+            currentPhase = 'in';
+            pauseButton.textContent = 'Pause';
+            breathingCircle.classList.remove('breathe-in', 'breathe-out');
+            instructionText.textContent = 'Breathe In';
+            document.body.classList.remove('completion-active');
+            document.querySelector('.back-button').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

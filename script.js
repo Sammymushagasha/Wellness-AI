@@ -52,6 +52,7 @@ let currentPage = 'chat';
 let currentMood = null;
 let streamingMessage = null;
 let useTensorFlow = false;
+let aiMode = 'regular';
 
 // ===== DOM ELEMENTS =====
 const navItems = document.querySelectorAll('.nav-item');
@@ -61,6 +62,7 @@ const messagesArea = document.getElementById('messagesArea');
 const emptyState = document.querySelector('.empty-state');
 const chatContainer = document.querySelector('.chat-container');
 const promptBubbles = document.querySelectorAll('.prompt-bubble');
+const modeOptions = document.querySelectorAll('.mode-option');
 
 // ===== SLANG NORMALIZATION =====
 const SLANG_DICTIONARY = {
@@ -172,6 +174,16 @@ navItems.forEach(item => {
     });
 });
 
+// ===== MODE SELECTOR =====
+modeOptions.forEach(option => {
+    option.addEventListener('click', () => {
+        modeOptions.forEach(btn => btn.classList.remove('active'));
+        option.classList.add('active');
+        aiMode = option.dataset.mode || 'regular';
+        showSystemMessage(`Mode set to ${aiMode === 'friendly' ? 'Simplistic AI' : 'Regular AI'}`);
+    });
+});
+
 // ===== INPUT HANDLING =====
 messageInput.addEventListener('input', () => {
     sendButton.disabled = messageInput.value.trim() === '';
@@ -188,6 +200,7 @@ sendButton.addEventListener('click', () => {
         sendMessage();
     }
 });
+
 
 // ===== PROMPT BUBBLES =====
 promptBubbles.forEach(bubble => {
@@ -278,11 +291,24 @@ function addTypingIndicator() {
     typingDiv.className = 'message ai typing-indicator';
     typingDiv.innerHTML = `
         <div class="message-bubble">
-            <span style="opacity: 0.6;">✨ Thinking...</span>
+            <div class="lottie-typing" aria-hidden="true"></div>
+            <span class="typing-label">Thinking</span>
         </div>
     `;
     messagesArea.appendChild(typingDiv);
     chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    const lottieHost = typingDiv.querySelector('.lottie-typing');
+    if (window.lottie && lottieHost) {
+        window.lottie.loadAnimation({
+            container: lottieHost,
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: 'https://assets9.lottiefiles.com/packages/lf20_usmfx6bp.json'
+        });
+    }
+
     return typingDiv;
 }
 
@@ -333,7 +359,16 @@ When responding, subtly guide the user toward trying one of these features: ${cu
 Use natural, conversational language to suggest these options without being pushy.`;
     }
     
-    return `You are a compassionate and empathetic mental wellness AI assistant specialized in therapeutic conversations.
+    const basePrompt = aiMode === 'friendly'
+        ? `You are a close friend texting with the user. Be extremely friendly, casual, and expressive.
+YOUR ROLE:
+- Talk like a real friend in a text thread (short, warm messages)
+- Use friendly reactions like "No way", "tell me about that", "how could she do that"
+- Ask natural follow-up questions and keep the conversation flowing
+- Avoid professional or clinical tone
+- Keep responses concise (1-3 sentences) but caring
+- Match the user's slang and texting style without overdoing it`
+        : `You are a compassionate and empathetic mental wellness AI assistant specialized in therapeutic conversations.
 
 YOUR ROLE:
 - Listen actively and validate feelings with empathy
@@ -341,7 +376,10 @@ YOUR ROLE:
 - Recognize casual language, slang, and abbreviations naturally
 - Gently guide users toward helpful wellness features when appropriate
 - Keep responses concise (2-4 sentences) but warm and personal
-- Use a friendly, conversational tone like a supportive friend
+ - Use a friendly, conversational tone like a supportive friend
+ - Do not use emojis`;
+
+    return `${basePrompt}
 
 AVAILABLE WELLNESS FEATURES YOU CAN RECOMMEND:
 1. Breathing exercises - For anxiety, stress, panic

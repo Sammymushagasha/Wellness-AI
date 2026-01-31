@@ -14,6 +14,9 @@
     
     <!-- ⭐ ADD THE TENSORFLOW CLASSIFIER ⭐ -->
     <script src="tensorflow-mood-classifier.js"></script>
+
+    <!-- Lottie for nicer typing indicator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 </head>
 <body>
     <!-- Lava lamp background -->
@@ -104,6 +107,13 @@
 
         <!-- Input Area -->
         <div class="input-container">
+            <div class="mode-selector">
+                <span class="mode-label">Style</span>
+                <div class="mode-options">
+                    <button class="mode-option active" data-mode="regular">Regular AI</button>
+                    <button class="mode-option" data-mode="friendly">Simplistic AI</button>
+                </div>
+            </div>
             <div class="input-wrapper">
                 <input 
                     type="text" 

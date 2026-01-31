@@ -1,3 +1,143 @@
+// ===== UPDATED TYPEWRITER ANIMATION (ADD THIS TO REPLACE THE EXISTING ONE) =====
+// This version only runs the animation once per session
+
+document.addEventListener('DOMContentLoaded', function() {
+    const greetingElement = document.querySelector('.main-greeting');
+    const subGreeting = document.querySelector('.sub-greeting');
+    const promptsContainer = document.querySelector('.prompts-container');
+    
+    if (!greetingElement) return;
+    
+    // Clear and set up typewriter
+    greetingElement.innerHTML = '<span class="typewriter" id="typewriterText"></span>';
+    const typewriterElement = document.getElementById('typewriterText');
+    
+    const introText = "Hello I'm Katara";
+    const phrases = [
+        "What's on your mind?",
+        "How are you feeling today?",
+        "Let's talk about you"
+    ];
+    
+    let currentPhrase = 0;
+    let isAnimating = false;
+
+    async function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function typeText(text, speed = 80) {
+        if (text === introText) {
+            const beforeKatara = "Hello I'm ";
+            const kataraWord = "Katara";
+            
+            for (let i = 0; i < beforeKatara.length; i++) {
+                typewriterElement.textContent += beforeKatara[i];
+                await sleep(speed);
+            }
+            
+            const kataraSpan = document.createElement('span');
+            kataraSpan.className = 'katara-text';
+            typewriterElement.appendChild(kataraSpan);
+            
+            for (let i = 0; i < kataraWord.length; i++) {
+                kataraSpan.textContent += kataraWord[i];
+                await sleep(speed);
+            }
+        } else {
+            for (let i = 0; i < text.length; i++) {
+                typewriterElement.textContent += text[i];
+                await sleep(speed);
+            }
+        }
+    }
+
+    async function backspaceText(speed = 30) {
+        const kataraSpan = typewriterElement.querySelector('.katara-text');
+        
+        if (kataraSpan) {
+            const kataraText = kataraSpan.textContent;
+            for (let i = kataraText.length; i > 0; i--) {
+                kataraSpan.textContent = kataraText.substring(0, i - 1);
+                await sleep(speed);
+            }
+            kataraSpan.remove();
+            
+            const remainingText = typewriterElement.textContent;
+            for (let i = remainingText.length; i > 0; i--) {
+                typewriterElement.textContent = remainingText.substring(0, i - 1);
+                await sleep(speed);
+            }
+        } else {
+            const currentText = typewriterElement.textContent;
+            for (let i = currentText.length; i > 0; i--) {
+                typewriterElement.textContent = currentText.substring(0, i - 1);
+                await sleep(speed);
+            }
+        }
+    }
+
+    async function runAnimation() {
+        if (isAnimating) return;
+        isAnimating = true;
+
+        typewriterElement.textContent = '';
+        await sleep(500);
+        await typeText(introText, 100);
+        await sleep(500);
+
+        if (subGreeting) subGreeting.classList.add('show');
+        await sleep(400);
+        if (promptsContainer) promptsContainer.classList.add('show');
+        
+        await sleep(1000);
+
+        await backspaceText(30);
+        await sleep(300);
+
+        while (true) {
+            const phrase = phrases[currentPhrase];
+            
+            await typeText(phrase, 60);
+            await sleep(800);
+
+            if (currentPhrase === phrases.length - 1) {
+                typewriterElement.classList.add('no-cursor');
+                break;
+            }
+
+            await sleep(200);
+            await backspaceText(30);
+            await sleep(100);
+
+            currentPhrase++;
+        }
+
+        isAnimating = false;
+    }
+
+    // Check if animation has already run in this session
+    const hasAnimationRun = sessionStorage.getItem('typewriterAnimationRun');
+    
+    if (!hasAnimationRun) {
+        // First time visiting - run animation
+        setTimeout(runAnimation, 500);
+        sessionStorage.setItem('typewriterAnimationRun', 'true');
+    } else {
+        // Already seen animation - show final state immediately
+        typewriterElement.textContent = phrases[phrases.length - 1];
+        typewriterElement.classList.add('no-cursor');
+        if (subGreeting) {
+            subGreeting.style.opacity = '1';
+            subGreeting.style.transform = 'translateY(0)';
+        }
+        if (promptsContainer) {
+            promptsContainer.style.opacity = '1';
+            promptsContainer.style.transform = 'translateY(0)';
+        }
+    }
+});
+
 // ===== CONFIGURATION =====
 const CONFIG = {
     // Use local proxy instead of direct API call (fixes CORS)

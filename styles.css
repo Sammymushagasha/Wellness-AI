@@ -1,3 +1,54 @@
+/* ===== TYPEWRITER ANIMATION ===== */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400&display=swap');
+
+.typewriter {
+    display: inline-block;
+    border-right: 3px solid white;
+    padding-right: 5px;
+    animation: blink 0.7s step-end infinite;
+}
+
+@keyframes blink {
+    0%, 100% { border-color: white; }
+    50% { border-color: transparent; }
+}
+
+.typewriter.no-cursor {
+    border-right: none;
+    animation: none;
+}
+
+.main-greeting {
+    font-family: 'Montserrat', sans-serif !important;
+    font-weight: 400 !important;
+    min-height: 60px;
+}
+
+.sub-greeting {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.sub-greeting.show {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.prompts-container {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.prompts-container.show {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* ===== RESET & BASE STYLES ===== */
 * {
     margin: 0;
@@ -39,7 +90,7 @@ body.hide-lava .lava-wrap {
 
 /* ===== SIDEBAR ===== */
 .sidebar {
-    width: 300px;
+    width: 245px;
     background: #000000;
     backdrop-filter: blur(10px);
     border-right: 1px solid rgba(255, 255, 255, 0.35);

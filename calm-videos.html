@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calm Videos - Wellness AI</title>
+
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --deep-navy: #0a0e27;
+            --soft-lavender: #b4a7d6;
+            --calm-teal: #6dd5c3;
+            --warm-peach: #ffb4a2;
+            --muted-purple: #4a3f5c;
+            --glass-white: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body.calm-videos {
+            font-family: 'Quicksand', sans-serif;
+            background: var(--deep-navy);
+            color: #fff;
+            overflow-x: hidden;
+            overflow-y: auto !important;
+            min-height: 100%;
+            height: auto;
+        }
+
+        body.calm-videos .main-content {
+            position: relative;
+            z-index: 2;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 120px 2rem 4rem;
+        }
+
+        /* Background Video Layer */
+        .background-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .background-video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translate(-50%, -50%);
+            filter: blur(8px) brightness(0.4);
+            opacity: 0.6;
+        }
+
+        .background-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg,
+                rgba(10, 14, 39, 0.85) 0%,
+                rgba(74, 63, 92, 0.75) 50%,
+                rgba(10, 14, 39, 0.9) 100%);
+        }
+
+        /* Glass Panel */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(30px);
+            border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 3.5rem;
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.4);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Header */
+        .header-section {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .main-title {
+            font-family: 'DM Serif Display', serif;
+            font-size: 3.5rem;
+            font-weight: 400;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ffffff 0%, var(--soft-lavender) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+            animation: fadeIn 1.2s ease-out 0.2s both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .subtitle {
+            font-size: 1.15rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.7;
+            animation: fadeIn 1.2s ease-out 0.4s both;
+        }
+
+        /* Category Selector */
+        .category-selector {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 3rem;
+            animation: fadeIn 1.2s ease-out 0.6s both;
+        }
+
+        .category-chip {
+            padding: 0.85rem 1.75rem;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.85);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .category-chip:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: var(--calm-teal);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(109, 213, 195, 0.2);
+        }
+
+        .category-chip.active {
+            background: linear-gradient(135deg, var(--calm-teal), var(--soft-lavender));
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 8px 32px rgba(109, 213, 195, 0.4);
+        }
+
+        /* Video Grid */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            animation: fadeIn 1.2s ease-out 0.8s both;
+            min-height: 200px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            animation: fadeIn 1.2s ease-out 0.8s both;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.3;
+        }
+
+        .empty-state-title {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 0.75rem;
+        }
+
+        .empty-state-text {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 300;
+            max-width: 400px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .video-card {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            aspect-ratio: 16/10;
+        }
+
+        .video-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            border-color: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .video-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .video-card:hover .video-preview {
+            transform: scale(1.05);
+        }
+
+        .video-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem;
+            background: linear-gradient(to top,
+                rgba(10, 14, 39, 0.95) 0%,
+                rgba(10, 14, 39, 0.7) 50%,
+                transparent 100%);
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .video-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        .video-description {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+            line-height: 1.5;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 14, 39, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(30px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 2rem;
+            max-width: 900px;
+            width: 90%;
+            box-shadow: 0 30px 100px rgba(0, 0, 0, 0.6);
+            animation: scaleIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #fff;
+            font-size: 1.5rem;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: rotate(90deg);
+        }
+
+        .modal-video {
+            width: 100%;
+            aspect-ratio: 16/9;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        .video-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .video-fallback {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            aspect-ratio: 16/9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fallback-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.6;
+        }
+
+        .fallback-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.75rem;
+        }
+
+        .fallback-text {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 2rem;
+            max-width: 400px;
+        }
+
+        .calming-message {
+            text-align: center;
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 300;
+            font-style: italic;
+            padding: 1rem;
+            background: rgba(109, 213, 195, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(109, 213, 195, 0.2);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            body.calm-videos .main-content {
+                padding: 100px 1rem 2rem;
+            }
+
+            .glass-panel {
+                padding: 2rem;
+                border-radius: 24px;
+            }
+
+            .main-title {
+                font-size: 2.5rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+
+            .category-selector {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .category-chip {
+                justify-content: center;
+            }
+
+            .video-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 1.1rem;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+    </style>
+</head>
+<body class="calm-videos">
+    <div class="background-layer">
+        <video class="background-video" autoplay muted loop playsinline>
+            <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+        </video>
+        <div class="background-overlay"></div>
+    </div>
+
+    <aside class="sidebar">
+        <div class="logo">
+            <h1>Wellness AI</h1>
+        </div>
+        <div class="divider"></div>
+
+        <nav class="nav-menu">
+            <a class="nav-item" href="index.html" data-page="chat">
+                <div class="nav-content">
+                    <span class="nav-title">AI Chat</span>
+                    <span class="nav-desc">Talk with empathetic AI</span>
+                </div>
+            </a>
+
+            <a class="nav-item" data-page="games" href="mini-games.html">
+                <div class="nav-content">
+                    <span class="nav-title">Mini Games</span>
+                    <span class="nav-desc">Relaxing activities</span>
+                </div>
+            </a>
+
+            <a class="nav-item active" data-page="videos" href="calm-videos.html">
+                <div class="nav-content">
+                    <span class="nav-title">Calm Videos</span>
+                    <span class="nav-desc">Soothing visuals</span>
+                </div>
+            </a>
+
+            <a class="nav-item" data-page="stretching" href="physical.html">
+                <div class="nav-content">
+                    <span class="nav-title">Take a Breather</span>
+                    <span class="nav-desc">Breathing Exercise</span>
+                </div>
+            </a>
+
+            <button class="nav-item" data-page="tracker">
+                <div class="nav-content">
+                    <span class="nav-title">Mood Tracker</span>
+                    <span class="nav-desc">Track your feelings</span>
+                </div>
+            </button>
+
+            <button class="nav-item" data-page="settings">
+                <div class="nav-content">
+                    <span class="nav-title">Settings</span>
+                    <span class="nav-desc">Preferences</span>
+                </div>
+            </button>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <div class="glass-panel">
+            <div class="header-section">
+                <h1 class="main-title">Choose Your Calm</h1>
+                <p class="subtitle">Pick a category of satisfying videos to help you reset and relax.</p>
+            </div>
+
+            <div class="category-selector">
+                <button class="category-chip" data-category="water">
+                    <span>Water & Ripples</span>
+                </button>
+                <button class="category-chip" data-category="sand">
+                    <span>Sand & Cutting</span>
+                </button>
+                <button class="category-chip" data-category="cleaning">
+                    <span>Cleaning & Restoration</span>
+                </button>
+                <button class="category-chip" data-category="growth">
+                    <span>Growth & Nature</span>
+                </button>
+            </div>
+
+            <div id="contentArea">
+                <div class="empty-state">
+                    <div class="empty-state-icon">Calm</div>
+                    <h3 class="empty-state-title">Select a category to begin</h3>
+                    <p class="empty-state-text">Choose one of the categories above to discover calming videos curated just for you.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal" id="videoModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Video Title</h3>
+                <button class="close-btn" id="closeModalButton" type="button">×</button>
+            </div>
+            <div id="videoContainer" class="video-container">
+                <video
+                    id="modalVideo"
+                    class="modal-video"
+                    controls
+                    autoplay
+                    loop
+                    style="display: none;">
+                    <source id="videoSource" src="" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <div id="videoPlaceholder" class="video-fallback" style="display: none;">
+                    <div class="fallback-icon">Video</div>
+                    <h4 class="fallback-title">Video Coming Soon</h4>
+                    <p class="fallback-text">This calming video will be available shortly. Please check back soon.</p>
+                </div>
+            </div>
+            <div class="calming-message" id="calmingMessage">
+                Take a deep breath while watching.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const videoData = {
+            water: [
+                {
+                    title: 'Gentle Water Ripples',
+                    description: '30 seconds of slow rippling water to calm your mind.',
+                    thumbnail: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&auto=format&fit=crop',
+                    videoFile: 'calm_videos/watterripple.mp4',
+                    message: 'Let the waves wash away your worries.'
+                },
+                {
+                    title: 'Peaceful Lake Reflections',
+                    description: 'Still water reflecting clouds for a moment of peace.',
+                    thumbnail: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&auto=format&fit=crop',
+                    videoFile: 'calm_videos/lakewater.mp4',
+                    message: 'Find stillness in the reflection.'
+                },
+                {
+                    title: 'Raindrops on Glass',
+                    description: 'Soothing rain patterns creating natural art.',
+                    thumbnail: 'https://images.unsplash.com/photo-1428908728789-d2de25dbd4e2?w=800&auto=format&fit=crop',
+                    videoFile: 'calm_videos/raincar.mp4',
+                    message: 'Each drop carries away a worry.'
+                }
+            ],
+            sand: [
+                {
+                    title: 'Perfect Sand Cuts',
+                    description: 'Precision kinetic sand cuts for instant visual satisfaction.',
+                    thumbnail: 'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800&auto=format&fit=crop',
+                    videoFile: 'calm_videos/sandcutting.mp4',
+                    message: 'Satisfaction in every slice.'
+                },
+                {
+                    title: 'Sand Art',
+                    description: 'Mesmerizing patterns drawn in colorful sand.',
+                    thumbnail: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop',
+                    videoFile: 'calm_videos/sandpattern.mp4',
+                    message: 'Find peace in the pattern.'
+                }
+            ],
+            cleaning: [
+                {
+                    title: 'Restoration Car Magic',
+                    description: 'Watch BMW return back to its former glory.',
+                    thumbnail: 'photos/carcleaing.webp',
+                    videoFile: 'calm_videos/bmwcleaning.mp4',
+                    message: 'Renewal is always possible.'
+                },
+                {
+                    title: 'Carpet Cleaning',
+                    description: 'Deep, satisfying passes that bring the carpet back to life.',
+                    thumbnail: 'photos/carpet.webp',
+                    videoFile: 'calm_videos/carpetcleaning.mp4',
+                    message: 'Clear the clutter, clear your mind.'
+                }
+            ],
+            growth: [
+                {
+                    title: 'Time-Lapse Blooms',
+                    description: 'Flowers opening in accelerated time.',
+                    thumbnail: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=800&auto=format&fit=crop',
+                    videoFile: 'calm_videos/flowerblooming.mp4',
+                    message: 'Growth happens in its own time.'
+                },
+                {
+                    title: 'Nature Walk',
+                    description: 'A gentle nature walk to steady your breath and clear your mind.',
+                    thumbnail: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&auto=format&fit=crop',
+                    videoFile: 'calm_videos/forest.mp4',
+                    message: 'Let the quiet of nature reset your pace.'
+                }
+            ],
+            
+        };
+
+        let currentCategory = null;
+
+        document.querySelectorAll('.category-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                currentCategory = chip.dataset.category;
+                renderVideos(currentCategory);
+            });
+        });
+
+        function renderVideos(category) {
+            const contentArea = document.getElementById('contentArea');
+            const videos = videoData[category];
+
+            if (!videos || videos.length === 0) {
+                contentArea.innerHTML = '<div class="loading">Loading calming videos</div>';
+                return;
+            }
+
+            const videoHTML = videos.map((video, index) => `
+                <div class="video-card" data-index="${index}">
+                    <img src="${video.thumbnail}" alt="${video.title}" class="video-preview">
+                    <div class="video-overlay">
+                        <div class="video-title">${video.title}</div>
+                        <div class="video-description">${video.description}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            contentArea.innerHTML = `<div class="video-grid">${videoHTML}</div>`;
+
+            contentArea.querySelectorAll('.video-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const index = Number(card.dataset.index);
+                    openModal(index, category);
+                });
+            });
+        }
+
+        function openModal(index, category) {
+            const video = videoData[category][index];
+            const modal = document.getElementById('videoModal');
+            const modalVideo = document.getElementById('modalVideo');
+            const videoSource = document.getElementById('videoSource');
+            const videoPlaceholder = document.getElementById('videoPlaceholder');
+            const modalTitle = document.getElementById('modalTitle');
+            const calmingMessage = document.getElementById('calmingMessage');
+
+            modalTitle.textContent = video.title;
+            calmingMessage.textContent = video.message;
+
+            if (video.videoFile) {
+                modalVideo.style.display = 'block';
+                videoPlaceholder.style.display = 'none';
+                videoSource.src = video.videoFile;
+                modalVideo.load();
+                modalVideo.play().catch(() => {});
+            } else {
+                modalVideo.pause();
+                modalVideo.style.display = 'none';
+                videoPlaceholder.style.display = 'flex';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('videoModal');
+            const modalVideo = document.getElementById('modalVideo');
+            const videoSource = document.getElementById('videoSource');
+            modal.classList.remove('active');
+            modalVideo.pause();
+            videoSource.src = '';
+        }
+
+        document.getElementById('closeModalButton').addEventListener('click', closeModal);
+
+        document.getElementById('videoModal').addEventListener('click', (e) => {
+            if (e.target.id === 'videoModal') {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

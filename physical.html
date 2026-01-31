@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wellness AI - Stretching</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Lava lamp background -->
+    <div class="lava-wrap">
+        <canvas id="lavaCanvas"></canvas>
+    </div>
+
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <h1>Wellness AI</h1>
+        </div>
+        <div class="divider"></div>
+
+        <nav class="nav-menu">
+            <a class="nav-item" data-page="chat" href="index.html">
+                <div class="nav-content">
+                    <span class="nav-title">AI Chat</span>
+                    <span class="nav-desc">Talk with empathetic AI</span>
+                </div>
+            </a>
+
+            <button class="nav-item" data-page="games">
+                <div class="nav-content">
+                    <span class="nav-title">Mini Games</span>
+                    <span class="nav-desc">Relaxing activities</span>
+                </div>
+            </button>
+
+            <button class="nav-item" data-page="videos">
+                <div class="nav-content">
+                    <span class="nav-title">Calm Videos</span>
+                    <span class="nav-desc">Soothing visuals</span>
+                </div>
+            </button>
+
+            <a class="nav-item active" data-page="stretching" href="physical.html">
+                <div class="nav-content">
+                    <span class="nav-title">Stretching</span>
+                    <span class="nav-desc">Body movement</span>
+                </div>
+            </a>
+
+            <button class="nav-item" data-page="tracker">
+                <div class="nav-content">
+                    <span class="nav-title">Mood Tracker</span>
+                    <span class="nav-desc">Track your feelings</span>
+                </div>
+            </button>
+
+            <button class="nav-item" data-page="settings">
+                <div class="nav-content">
+                    <span class="nav-title">Settings</span>
+                    <span class="nav-desc">Preferences</span>
+                </div>
+            </button>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="empty-state">
+            <h2 class="main-greeting">Stretching</h2>
+            <p class="sub-greeting">Gentle movement to reset your body</p>
+        </div>
+    </main>
+
+    <script src="lava.js"></script>
+</body>
+</html>

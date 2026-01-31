@@ -1,4 +1,6 @@
-// ===== TYPEWRITER ANIMATION =====
+// ===== UPDATED TYPEWRITER ANIMATION (ADD THIS TO REPLACE THE EXISTING ONE) =====
+// This version only runs the animation once per session
+
 document.addEventListener('DOMContentLoaded', function() {
     const greetingElement = document.querySelector('.main-greeting');
     const subGreeting = document.querySelector('.sub-greeting');
@@ -14,8 +16,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const phrases = [
         "What's on your mind?",
         "How are you feeling today?",
-        "Let's talk about you",
-        ];
+        "Let's talk about you"
+    ];
     
     let currentPhrase = 0;
     let isAnimating = false;
@@ -29,24 +31,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const beforeKatara = "Hello I'm ";
             const kataraWord = "Katara";
             
-            // Type "Hello I'm "
             for (let i = 0; i < beforeKatara.length; i++) {
                 typewriterElement.textContent += beforeKatara[i];
                 await sleep(speed);
             }
             
-            // Create span for Katara with special styling
             const kataraSpan = document.createElement('span');
             kataraSpan.className = 'katara-text';
             typewriterElement.appendChild(kataraSpan);
             
-            // Type "Katara" in special font
             for (let i = 0; i < kataraWord.length; i++) {
                 kataraSpan.textContent += kataraWord[i];
                 await sleep(speed);
             }
         } else {
-            // Normal typing
             for (let i = 0; i < text.length; i++) {
                 typewriterElement.textContent += text[i];
                 await sleep(speed);
@@ -58,7 +56,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const kataraSpan = typewriterElement.querySelector('.katara-text');
         
         if (kataraSpan) {
-            // Backspace Katara word
             const kataraText = kataraSpan.textContent;
             for (let i = kataraText.length; i > 0; i--) {
                 kataraSpan.textContent = kataraText.substring(0, i - 1);
@@ -66,14 +63,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             kataraSpan.remove();
             
-            // Backspace rest
             const remainingText = typewriterElement.textContent;
             for (let i = remainingText.length; i > 0; i--) {
                 typewriterElement.textContent = remainingText.substring(0, i - 1);
                 await sleep(speed);
             }
         } else {
-            // Normal backspacing
             const currentText = typewriterElement.textContent;
             for (let i = currentText.length; i > 0; i--) {
                 typewriterElement.textContent = currentText.substring(0, i - 1);
@@ -82,41 +77,35 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-   async function runAnimation() {
+    async function runAnimation() {
         if (isAnimating) return;
         isAnimating = true;
 
-        // Type intro
         typewriterElement.textContent = '';
         await sleep(500);
         await typeText(introText, 100);
         await sleep(500);
 
-        // Show subtitle and prompts right after intro
         if (subGreeting) subGreeting.classList.add('show');
         await sleep(400);
         if (promptsContainer) promptsContainer.classList.add('show');
         
         await sleep(1000);
 
-        // Backspace intro
         await backspaceText(30);
         await sleep(300);
 
-        // Cycle through phrases
         while (true) {
             const phrase = phrases[currentPhrase];
             
             await typeText(phrase, 60);
             await sleep(800);
 
-            // If last phrase, stop
             if (currentPhrase === phrases.length - 1) {
                 typewriterElement.classList.add('no-cursor');
                 break;
             }
 
-            // Backspace for next phrase
             await sleep(200);
             await backspaceText(30);
             await sleep(100);
@@ -126,8 +115,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
         isAnimating = false;
     }
-    // Start animation
-    setTimeout(runAnimation, 500);
+
+    // Check if animation has already run in this session
+    const hasAnimationRun = sessionStorage.getItem('typewriterAnimationRun');
+    
+    if (!hasAnimationRun) {
+        // First time visiting - run animation
+        setTimeout(runAnimation, 500);
+        sessionStorage.setItem('typewriterAnimationRun', 'true');
+    } else {
+        // Already seen animation - show final state immediately
+        typewriterElement.textContent = phrases[phrases.length - 1];
+        typewriterElement.classList.add('no-cursor');
+        if (subGreeting) {
+            subGreeting.style.opacity = '1';
+            subGreeting.style.transform = 'translateY(0)';
+        }
+        if (promptsContainer) {
+            promptsContainer.style.opacity = '1';
+            promptsContainer.style.transform = 'translateY(0)';
+        }
+    }
 });
 
 // ===== CONFIGURATION =====

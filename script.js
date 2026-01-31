@@ -168,7 +168,8 @@ navItems.forEach(item => {
         
         console.log(`Switched to: ${page}`);
         
-        if (page !== 'chat') {
+        const isLink = item.tagName.toLowerCase() === 'a' || item.hasAttribute('href');
+        if (page !== 'chat' && !isLink) {
             alert(`${item.querySelector('.nav-title').textContent} - Coming soon!`);
         }
     });

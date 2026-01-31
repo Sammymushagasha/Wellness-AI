@@ -53,6 +53,7 @@ let currentMood = null;
 let streamingMessage = null;
 let useTensorFlow = false;
 let aiMode = 'regular';
+let pendingBreatherConsent = false;
 
 // ===== DOM ELEMENTS =====
 const navItems = document.querySelectorAll('.nav-item');
@@ -86,6 +87,41 @@ function getCrisisResponse() {
         "If you’re in the U.S., you can call or text 988 to reach the Suicide & Crisis Lifeline—it's free, 24/7. If you’re in immediate danger, call 911.",
         "If you’re outside the U.S., I can help find a local crisis number. You don’t have to go through this alone."
     ].join('\n\n');
+}
+
+// ===== BREATHER INTENT + CONSENT =====
+const BREATHER_KEYWORDS = [
+    'breather', 'take a breather', 'breathe', 'breathing', 'breathing exercise',
+    'breathing exercises', 'box breathing', 'deep breath', 'calm down', 'slow down'
+];
+
+const AFFIRMATIVE_KEYWORDS = [
+    'yes', 'yeah', 'yep', 'sure', 'ok', 'okay', 'please', 'do it', 'sounds good',
+    'let\'s do it', 'i want that', 'open it', 'go ahead', 'im down', 'i\'m down'
+];
+
+const NEGATIVE_KEYWORDS = ['no', 'not now', 'nope', 'nah', 'later', 'don\'t', 'do not'];
+
+function isBreatherTrigger(text) {
+    const normalized = text.toLowerCase();
+    return BREATHER_KEYWORDS.some(keyword => normalized.includes(keyword));
+}
+
+function isAffirmative(text) {
+    const normalized = text.toLowerCase();
+    return AFFIRMATIVE_KEYWORDS.some(keyword => normalized.includes(keyword));
+}
+
+function isNegative(text) {
+    const normalized = text.toLowerCase();
+    return NEGATIVE_KEYWORDS.some(keyword => normalized.includes(keyword));
+}
+
+function openBreatherTab() {
+    showSystemMessage('Opening Take a Breather...');
+    setTimeout(() => {
+        window.location.href = 'physical.html';
+    }, 300);
 }
 
 // ===== SLANG NORMALIZATION =====
@@ -264,6 +300,52 @@ async function sendMessage() {
             role: 'assistant',
             content: crisisText
         });
+        return;
+    }
+
+    if (pendingBreatherConsent && isAffirmative(userMessage)) {
+        const confirmText = 'Got it. Opening the Take a Breather tab now.';
+        addMessage(confirmText, 'ai');
+        conversationHistory.push({
+            role: 'user',
+            content: userMessage
+        });
+        conversationHistory.push({
+            role: 'assistant',
+            content: confirmText
+        });
+        pendingBreatherConsent = false;
+        openBreatherTab();
+        return;
+    }
+
+    if (pendingBreatherConsent && isNegative(userMessage)) {
+        const declineText = 'No problem. We can do that anytime you want.';
+        addMessage(declineText, 'ai');
+        conversationHistory.push({
+            role: 'user',
+            content: userMessage
+        });
+        conversationHistory.push({
+            role: 'assistant',
+            content: declineText
+        });
+        pendingBreatherConsent = false;
+        return;
+    }
+
+    if (isBreatherTrigger(userMessage)) {
+        const offerText = 'Want me to open the Take a Breather tab for you?';
+        addMessage(offerText, 'ai');
+        conversationHistory.push({
+            role: 'user',
+            content: userMessage
+        });
+        conversationHistory.push({
+            role: 'assistant',
+            content: offerText
+        });
+        pendingBreatherConsent = true;
         return;
     }
 

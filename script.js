@@ -1,3 +1,135 @@
+// ===== TYPEWRITER ANIMATION =====
+document.addEventListener('DOMContentLoaded', function() {
+    const greetingElement = document.querySelector('.main-greeting');
+    const subGreeting = document.querySelector('.sub-greeting');
+    const promptsContainer = document.querySelector('.prompts-container');
+    
+    if (!greetingElement) return;
+    
+    // Clear and set up typewriter
+    greetingElement.innerHTML = '<span class="typewriter" id="typewriterText"></span>';
+    const typewriterElement = document.getElementById('typewriterText');
+    
+    const introText = "Hello I'm Katara";
+    const phrases = [
+        "What's on your mind?",
+        "How are you feeling today?",
+        "Let's talk about you",
+        ];
+    
+    let currentPhrase = 0;
+    let isAnimating = false;
+
+    async function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function typeText(text, speed = 80) {
+        if (text === introText) {
+            const beforeKatara = "Hello I'm ";
+            const kataraWord = "Katara";
+            
+            // Type "Hello I'm "
+            for (let i = 0; i < beforeKatara.length; i++) {
+                typewriterElement.textContent += beforeKatara[i];
+                await sleep(speed);
+            }
+            
+            // Create span for Katara with special styling
+            const kataraSpan = document.createElement('span');
+            kataraSpan.className = 'katara-text';
+            typewriterElement.appendChild(kataraSpan);
+            
+            // Type "Katara" in special font
+            for (let i = 0; i < kataraWord.length; i++) {
+                kataraSpan.textContent += kataraWord[i];
+                await sleep(speed);
+            }
+        } else {
+            // Normal typing
+            for (let i = 0; i < text.length; i++) {
+                typewriterElement.textContent += text[i];
+                await sleep(speed);
+            }
+        }
+    }
+
+    async function backspaceText(speed = 30) {
+        const kataraSpan = typewriterElement.querySelector('.katara-text');
+        
+        if (kataraSpan) {
+            // Backspace Katara word
+            const kataraText = kataraSpan.textContent;
+            for (let i = kataraText.length; i > 0; i--) {
+                kataraSpan.textContent = kataraText.substring(0, i - 1);
+                await sleep(speed);
+            }
+            kataraSpan.remove();
+            
+            // Backspace rest
+            const remainingText = typewriterElement.textContent;
+            for (let i = remainingText.length; i > 0; i--) {
+                typewriterElement.textContent = remainingText.substring(0, i - 1);
+                await sleep(speed);
+            }
+        } else {
+            // Normal backspacing
+            const currentText = typewriterElement.textContent;
+            for (let i = currentText.length; i > 0; i--) {
+                typewriterElement.textContent = currentText.substring(0, i - 1);
+                await sleep(speed);
+            }
+        }
+    }
+
+   async function runAnimation() {
+        if (isAnimating) return;
+        isAnimating = true;
+
+        // Type intro
+        typewriterElement.textContent = '';
+        await sleep(500);
+        await typeText(introText, 100);
+        await sleep(500);
+
+        // Show subtitle and prompts right after intro
+        if (subGreeting) subGreeting.classList.add('show');
+        await sleep(400);
+        if (promptsContainer) promptsContainer.classList.add('show');
+        
+        await sleep(1000);
+
+        // Backspace intro
+        await backspaceText(30);
+        await sleep(300);
+
+        // Cycle through phrases
+        while (true) {
+            const phrase = phrases[currentPhrase];
+            
+            await typeText(phrase, 60);
+            await sleep(800);
+
+            // If last phrase, stop
+            if (currentPhrase === phrases.length - 1) {
+                typewriterElement.classList.add('no-cursor');
+                break;
+            }
+
+            // Backspace for next phrase
+            await sleep(200);
+            await backspaceText(30);
+            await sleep(100);
+
+            currentPhrase++;
+        }
+
+        isAnimating = false;
+    }
+    // Start animation
+    setTimeout(runAnimation, 500);
+});
+
 // ===== CONFIGURATION =====
 const CONFIG = {
     // Use local proxy instead of direct API call (fixes CORS)

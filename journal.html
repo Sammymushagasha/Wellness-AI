@@ -457,8 +457,25 @@
 
         // Close notepad
         function closeNotepad() {
+            // Check if we're editing and all content is erased
+            if (editingEntryId) {
+                const title = document.querySelector('.notepad-title-input').value.trim();
+                const content = document.querySelector('.notepad-textarea').value.trim();
+                
+                // If both title and content are empty, delete the entry
+                if (!title && !content) {
+                    const entryIndex = entries.findIndex(e => e.id === editingEntryId);
+                    if (entryIndex !== -1) {
+                        entries.splice(entryIndex, 1);
+                        saveToLocalStorage();
+                        displayEntries();
+                    }
+                }
+            }
+            
             document.getElementById('notepadOverlay').classList.remove('active');
             editingEntryId = null;
+            
             // Reset date to today
             const today = new Date();
             const month = String(today.getMonth() + 1).padStart(2, '0');

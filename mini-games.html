@@ -842,21 +842,51 @@
 
         // Restart game
         function restartGame() {
+            // Reset flags and core state
             gameStarted = false;
             gameOver = false;
             score = 0;
             startTime = 0;
+            currentTime = startTime;
             hasShield = false;
+
+            // Clear entities
             meteors.length = 0;
             powerups.length = 0;
             particles.length = 0;
+
+            // Reset player position
             player.x = canvas.clientWidth / 2;
             player.y = canvas.clientHeight / 2;
             player.targetX = canvas.clientWidth / 2;
             player.targetY = canvas.clientHeight / 2;
             player.trailPositions = [];
+
+            // Hide overlay and show the start prompt
             document.getElementById('gameOverOverlay').classList.remove('show');
             document.getElementById('startPrompt').style.display = 'flex';
+
+            // Immediately reset the HUD so the player sees zeros before starting
+            const scoreEl = document.getElementById('scoreValue');
+            const timeEl = document.getElementById('timeValue');
+            if (scoreEl) scoreEl.textContent = '0';
+            if (timeEl) timeEl.textContent = '0s';
+            const shieldIndicator = document.getElementById('shieldIndicator');
+            if (shieldIndicator) shieldIndicator.style.display = 'none';
+
+            // Ensure spawn timers are fresh so we don't get delayed/queued spawns
+            lastMeteorSpawn = Date.now();
+            lastPowerupSpawn = Date.now();
+
+            // Allow a single mousemove or touch to start the game after pressing Play Again
+            function onStartTrigger() {
+                startGame();
+                // cleanup (the { once: true } option already ensures a single call)
+                window.removeEventListener('mousemove', onStartTrigger);
+                window.removeEventListener('touchstart', onStartTrigger);
+            }
+            window.addEventListener('mousemove', onStartTrigger, { once: true });
+            window.addEventListener('touchstart', onStartTrigger, { once: true });
         }
 
         // Main game loop
@@ -973,13 +1003,23 @@
             }
         });
 
-        // Restart button
-        document.getElementById('restartButton').addEventListener('click', restartGame);
+        // Restart button — refresh the page so the player starts fresh and must move to begin
+        const restartBtn = document.getElementById('restartButton');
+        if (restartBtn) {
+            restartBtn.addEventListener('click', () => {
+                // A full reload ensures all state (audio, timers, entities) is reset
+                window.location.reload();
+            });
+        }
 
         // Home button (takes player back to index)
         const homeBtn = document.getElementById('homeButton');
         if (homeBtn) {
             homeBtn.addEventListener('click', () => {
+                // Flag that we should re-enable 'start on move' when returning to this page
+                try {
+                    localStorage.setItem('miniGames.startOnReturn', '1');
+                } catch (e) { /* ignore if storage unavailable */ }
                 window.location.href = 'index.html';
             });
         }
@@ -1020,6 +1060,15 @@
                 }
             }
         });
+
+        // If we returned from Home with the flag set, prepare the restart/start-on-move behavior
+        try {
+            if (localStorage.getItem('miniGames.startOnReturn')) {
+                localStorage.removeItem('miniGames.startOnReturn');
+                // prepare the page like after Play Again so a single mousemove/touch starts the game
+                restartGame();
+            }
+        } catch(e) { /* ignore storage errors */ }
 
         // Start the game loop
         gameLoop();

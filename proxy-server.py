@@ -6,11 +6,12 @@ No Node.js required - just Python!
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
+import os
 import urllib.request
 import urllib.error
 
 # Your API configuration
-CLAUDE_API_KEY = 'Your API goes here'
+CLAUDE_API_KEY = os.getenv('CLAUDE_API_KEY', '')
 CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages'
 PORT = 3000
 
@@ -33,6 +34,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 body = self.rfile.read(content_length)
                 
                 # Prepare request to Claude API
+                if not CLAUDE_API_KEY:
+                    raise ValueError('CLAUDE_API_KEY is not set')
                 headers = {
                     'Content-Type': 'application/json',
                     'x-api-key': CLAUDE_API_KEY,
@@ -99,7 +102,8 @@ if __name__ == '__main__':
     print('Python Proxy Server Running!')
     print('=' * 60)
     print(f'Proxy URL: http://localhost:{PORT}/api/messages')
-    print(f'Using API Key: {CLAUDE_API_KEY[:20]}...')
+    masked = (CLAUDE_API_KEY[:4] + '...' + CLAUDE_API_KEY[-4:]) if CLAUDE_API_KEY else 'NOT SET'
+    print(f'Using API Key: {masked}')
     print(f'\nServer is ready!')
     print(f'Now open your website in Live Server')
     print(f'Keep this terminal window open')

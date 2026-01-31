@@ -13,8 +13,8 @@ canvas.height = height;
 
 // Ball constructor
 function Ball() {
-    const min = 15.0;
-    const max = 25.0;
+    const min = 19.0;
+    const max = 29.0;
     this.vel = {
         x: (Math.random() > 0.5 ? 1 : -1) * (0.5 + Math.random() * 0.6),
         y: (Math.random() > 0.5 ? 1 : -1) * (0.5 + Math.random() * 0.5)

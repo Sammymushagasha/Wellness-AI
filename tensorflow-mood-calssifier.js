@@ -362,7 +362,7 @@ class TensorFlowMoodClassifier {
                     mood: mood,
                     probability: probabilities[i]
                 }))
-            };
+            };a
             
         } catch (error) {
             console.error('Error classifying mood:', error);

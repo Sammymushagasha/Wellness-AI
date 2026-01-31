@@ -13,11 +13,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const typewriterElement = document.getElementById('typewriterText');
     
     const introText = "Hello I'm Katara";
-    const phrases = [
-        "What's on your mind?",
-        "How are you feeling today?",
-        
-    ];
+    const isMiniGames = document.body.classList.contains('hide-lava') && document.getElementById('gameCanvas');
+    const phrases = isMiniGames
+        ? ["Welcome to Mini Games"]
+        : [
+            "What's on your mind?",
+            "How are you feeling today?"
+        ];
     
     let currentPhrase = 0;
     let isAnimating = false;
@@ -196,6 +198,7 @@ let aiMode = 'regular';
 let pendingBreatherConsent = false;
 let pendingGameConsent = false;
 let pendingCalmVideosConsent = false;
+let pendingVentConsent = false;
 let lastJournalMatchId = null;
 let lastJournalMatchText = '';
 
@@ -273,7 +276,7 @@ function isGameTrigger(text) {
 }
 
 const CALM_VIDEO_KEYWORDS = [
-    'calm video', 'calm videos', 'relaxing video', 'relaxing videos',
+    'video', 'videos', 'calm video', 'calm videos', 'relaxing video', 'relaxing videos',
     'soothing videos', 'soothing video', 'watch something calming',
     'calm visuals', 'relaxing visuals', 'calming videos',
     'videos you have', 'videos in the app', 'see the videos', 'see videos',
@@ -283,6 +286,13 @@ const CALM_VIDEO_KEYWORDS = [
 function isCalmVideosTrigger(text) {
     const normalized = text.toLowerCase();
     return CALM_VIDEO_KEYWORDS.some(keyword => normalized.includes(keyword));
+}
+
+const VENT_KEYWORDS = ['vent', 'venting', 'need to vent', 'let me vent', 'let me talk'];
+
+function isVentTrigger(text) {
+    const normalized = text.toLowerCase();
+    return VENT_KEYWORDS.some(keyword => normalized.includes(keyword));
 }
 
 function openBreatherTab() {
@@ -303,6 +313,13 @@ function openCalmVideos() {
     showSystemMessage('Opening Calm Videos...');
     setTimeout(() => {
         window.location.href = 'calm-videos.html';
+    }, 300);
+}
+
+function openJournal() {
+    showSystemMessage('Opening Journal...');
+    setTimeout(() => {
+        window.location.href = 'journal.html';
     }, 300);
 }
 
@@ -566,7 +583,7 @@ async function sendMessage() {
     }
 
     if (pendingGameConsent && isAffirmative(userMessage)) {
-        const confirmText = 'Great. Opening Mini Games now.';
+        const confirmText = 'Great. Opening Game Time now.';
         addMessage(confirmText, 'ai');
         conversationHistory.push({
             role: 'user',
@@ -594,6 +611,22 @@ async function sendMessage() {
         });
         pendingCalmVideosConsent = false;
         openCalmVideos();
+        return;
+    }
+
+    if (pendingVentConsent && isAffirmative(userMessage)) {
+        const confirmText = 'Got it. Opening your vent now.';
+        addMessage(confirmText, 'ai');
+        conversationHistory.push({
+            role: 'user',
+            content: userMessage
+        });
+        conversationHistory.push({
+            role: 'assistant',
+            content: confirmText
+        });
+        pendingVentConsent = false;
+        openJournal();
         return;
     }
 
@@ -642,23 +675,38 @@ async function sendMessage() {
         return;
     }
 
-    if (isBreatherTrigger(userMessage)) {
-        const offerText = 'Want me to open the Take a Breather tab for you?';
-        addMessage(offerText, 'ai');
+    if (pendingVentConsent && isNegative(userMessage)) {
+        const declineText = 'No problem. If you want to come back to it later, I’m here.';
+        addMessage(declineText, 'ai');
         conversationHistory.push({
             role: 'user',
             content: userMessage
         });
         conversationHistory.push({
             role: 'assistant',
-            content: offerText
+            content: declineText
         });
-        pendingBreatherConsent = true;
+        pendingVentConsent = false;
+        return;
+    }
+
+    if (isBreatherTrigger(userMessage)) {
+        const confirmText = 'Opening Take a Breather now.';
+        addMessage(confirmText, 'ai');
+        conversationHistory.push({
+            role: 'user',
+            content: userMessage
+        });
+        conversationHistory.push({
+            role: 'assistant',
+            content: confirmText
+        });
+        openBreatherTab();
         return;
     }
 
     if (isGameTrigger(userMessage)) {
-        const offerText = 'Want to play a mini game to help reset or distract?';
+        const offerText = 'Want to open Game Time?';
         addMessage(offerText, 'ai');
         conversationHistory.push({
             role: 'user',
@@ -673,7 +721,7 @@ async function sendMessage() {
     }
 
     if (isCalmVideosTrigger(userMessage)) {
-        const offerText = 'Want me to open the Calm Videos tab for you?';
+        const offerText = 'Want to open Calm Videos?';
         addMessage(offerText, 'ai');
         conversationHistory.push({
             role: 'user',
@@ -684,6 +732,21 @@ async function sendMessage() {
             content: offerText
         });
         pendingCalmVideosConsent = true;
+        return;
+    }
+
+    if (isVentTrigger(userMessage)) {
+        const offerText = 'Is this about the venting you did?';
+        addMessage(offerText, 'ai');
+        conversationHistory.push({
+            role: 'user',
+            content: userMessage
+        });
+        conversationHistory.push({
+            role: 'assistant',
+            content: offerText
+        });
+        pendingVentConsent = true;
         return;
     }
 

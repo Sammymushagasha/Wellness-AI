@@ -81,6 +81,36 @@
                 rgba(10, 14, 39, 0.9) 100%);
         }
 
+        .back-button {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+            transition: all 0.2s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-3px);
+        }
+
+        .back-button svg {
+            width: 18px;
+            height: 18px;
+        }
+
         /* Glass Panel */
         .glass-panel {
             background: rgba(255, 255, 255, 0.08);
@@ -472,50 +502,12 @@
         <div class="background-overlay"></div>
     </div>
 
-    <aside class="sidebar">
-        <div class="logo">
-            <h1>Wellness AI</h1>
-        </div>
-        <div class="divider"></div>
-
-        <nav class="nav-menu">
-            <a class="nav-item" href="index.html" data-page="chat">
-                <div class="nav-content">
-                    <span class="nav-title">AI Chat</span>
-                    <span class="nav-desc">Talk with empathetic AI</span>
-                </div>
-            </a>
-
-            <a class="nav-item" data-page="games" href="mini-games.html" onclick="window.location.href='mini-games.html'; return false;" target="_self" rel="noopener">
-                <div class="nav-content">
-                    <span class="nav-title">Mini Games</span>
-                    <span class="nav-desc">Relaxing activities</span>
-                </div>
-            </a>
-
-            <a class="nav-item active" data-page="videos" href="calm-videos.html">
-                <div class="nav-content">
-                    <span class="nav-title">Calm Videos</span>
-                    <span class="nav-desc">Soothing visuals</span>
-                </div>
-            </a>
-
-            <a class="nav-item" data-page="stretching" href="physical.html">
-                <div class="nav-content">
-                    <span class="nav-title">Take a Breather</span>
-                    <span class="nav-desc">Breathing Exercise</span>
-                </div>
-            </a>
-
-            <button class="nav-item" data-page="tracker">
-                <div class="nav-content">
-                    <span class="nav-title">Mood Tracker</span>
-                    <span class="nav-desc">Track your feelings</span>
-                </div>
-            </button>
-
-        </nav>
-    </aside>
+    <a class="back-button" href="index.html" aria-label="Back to chat">
+        <svg viewBox="0 0 24 24" fill="none">
+            <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back
+    </a>
 
     <main class="main-content">
         <div class="glass-panel">

@@ -31,6 +31,11 @@ body {
     display: block;
 }
 
+/* If a page doesn't want the lava background (e.g., mini-games), add .hide-lava to <body> */
+body.hide-lava .lava-wrap {
+    display: none;
+}
+
 
 /* ===== SIDEBAR ===== */
 .sidebar {
@@ -53,6 +58,13 @@ body {
     font-size: 32px;
     font-weight: bold;
     color: #FFFFFF;
+}
+
+.logo-image {
+    display: block;
+    width: 62px;
+    max-width: 100%;
+    height: auto;
 }
 
 .divider {
